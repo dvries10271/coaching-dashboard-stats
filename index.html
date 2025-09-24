@@ -448,22 +448,21 @@
             animation: pulse 2s infinite;
         }
 
-        /* Health Overview Card - spans 2 columns on desktop, full width on smaller screens */
+        /* Card color themes */
+        .today-focus-card {
+            --card-color: #667eea;
+            --card-color-light: #764ba2;
+        }
+
+        .next-quarter-card {
+            --card-color: #E91E63;
+            --card-color-light: #F06292;
+        }
+
+        /* Health Overview Card - regular width */
         .health-card {
             --card-color: #8BC34A;
             --card-color-light: #AED581;
-        }
-
-        @media (min-width: 1000px) {
-            .health-card {
-                grid-column: span 2;
-            }
-        }
-
-        @media (max-width: 999px) {
-            .health-card {
-                grid-column: span 1;
-            }
         }
 
         .health-meter {
@@ -747,6 +746,79 @@
 
     <!-- Stats Grid -->
     <div class="stats-grid">
+        <!-- Today's Focus Card -->
+        <div class="stats-card today-focus-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                    </svg>
+                    Today's Focus
+                </div>
+            </div>
+            <div class="today-date" id="todayDate" style="text-align: center; font-size: 20px; font-weight: 600; color: #667eea; margin: 15px 0;">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            <div class="today-metrics">
+                <div class="metric-item" style="padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; margin: 10px 0;">
+                    <div class="metric-label" style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 5px;">Stack Session</div>
+                    <div class="metric-value" id="todayStackStatus" style="font-size: 18px; font-weight: 600; color: #FFC107;">Loading...</div>
+                </div>
+                <div class="metric-item" style="padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; margin: 10px 0;">
+                    <div class="metric-label" style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 5px;">Actions Moved</div>
+                    <div class="metric-value" id="actionsMovedToday" style="font-size: 18px; font-weight: 600; color: #03A9F4;">Loading...</div>
+                </div>
+                <div class="metric-item" style="padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; margin: 10px 0;">
+                    <div class="metric-label" style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 5px;">Tasks Completed</div>
+                    <div class="metric-value" id="tasksCompletedToday" style="font-size: 18px; font-weight: 600; color: #4CAF50;">Loading...</div>
+                </div>
+            </div>
+            <div class="today-reminder" id="todayReminder" style="margin-top: 15px; padding: 12px; background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 8px; font-size: 14px; color: #FF9800; display: none;">
+                <!-- Will show reminder if stack not completed -->
+            </div>
+        </div>
+
+        <!-- Next Quarter Card -->
+        <div class="stats-card next-quarter-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+                    </svg>
+                    Next Quarter Planning
+                </div>
+            </div>
+            <div class="next-quarter-display" id="nextQuarterDisplay" style="text-align: center; font-size: 36px; font-weight: bold; color: #E91E63; margin: 20px 0;">
+                Loading...
+            </div>
+            <div class="quarter-countdown" style="text-align: center; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; margin: 15px 0;">
+                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Starts in</div>
+                <div style="font-size: 48px; font-weight: bold; color: #E91E63;" id="daysUntilNext">--</div>
+                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Days</div>
+            </div>
+            <div id="nextQuarterGoals" style="margin-top: 20px;">
+                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6); margin-bottom: 10px;">Focus Areas:</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div class="focus-area" style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center; font-size: 12px;">
+                        <div style="font-weight: 600; color: #E91E63;">Body</div>
+                        <div style="color: rgba(255, 255, 255, 0.6); margin-top: 5px;">Prepare Goals</div>
+                    </div>
+                    <div class="focus-area" style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center; font-size: 12px;">
+                        <div style="font-weight: 600; color: #E91E63;">Being</div>
+                        <div style="color: rgba(255, 255, 255, 0.6); margin-top: 5px;">Prepare Goals</div>
+                    </div>
+                    <div class="focus-area" style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center; font-size: 12px;">
+                        <div style="font-weight: 600; color: #E91E63;">Balance</div>
+                        <div style="color: rgba(255, 255, 255, 0.6); margin-top: 5px;">Prepare Goals</div>
+                    </div>
+                    <div class="focus-area" style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center; font-size: 12px;">
+                        <div style="font-weight: 600; color: #E91E63;">Business</div>
+                        <div style="color: rgba(255, 255, 255, 0.6); margin-top: 5px;">Prepare Goals</div>
+                    </div>
+                </div>
+            </div>
+            <a href="/quarterly_impossible_game/" class="action-button" style="background: linear-gradient(135deg, #E91E63, #F06292);">Plan Next Quarter</a>
+        </div>
         <!-- Action Center Card -->
         <div class="stats-card action-center-card">
             <div class="card-header">
@@ -903,32 +975,25 @@
                     <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                     </svg>
-                    System Health Overview
+                    System Health
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
-                <div class="health-meter">
-                    <svg width="200" height="200" class="health-ring">
-                        <circle cx="100" cy="100" r="80" class="health-ring-bg"></circle>
-                        <circle cx="100" cy="100" r="80" class="health-ring-fill" id="healthRing"
-                                style="stroke-dasharray: 502; stroke-dashoffset: 502;"></circle>
-                    </svg>
-                    <div class="health-percentage" id="healthPercent">--%</div>
-                    <div class="health-label">Overall Health</div>
-                </div>
-                <div style="flex: 1; min-width: 300px;">
-                    <div class="insight-box">
-                        <div class="insight-title">Suggested Focus</div>
-                        <div class="suggested-focus" id="suggestedFocus">Loading...</div>
-                        <div class="trend-indicator" id="trendIndicator">Loading...</div>
-                    </div>
-                    <div class="insight-box" style="margin-top: 15px;">
-                        <div class="insight-title">Data Quality</div>
-                        <div id="dataQuality" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
-                            <!-- Will be populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
+            <div style="text-align: center; padding: 20px 0;">
+                <div style="font-size: 64px; font-weight: bold; line-height: 1;" id="healthPercent">--%</div>
+                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6); margin-top: 10px;">Overall Health Score</div>
+            </div>
+            <div class="health-bar" style="margin: 20px 0;">
+                <div class="health-bar-fill" id="healthBarFill" style="width: 0%;"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">Suggested Focus</div>
+                <div class="suggested-focus" id="suggestedFocus">Loading...</div>
+            </div>
+            <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <div class="trend-indicator" id="trendIndicator">Loading...</div>
+                <button class="refresh-button" onclick="refreshDashboard()" style="padding: 8px 16px; font-size: 14px;">
+                    <span>↻ Refresh</span>
+                </button>
             </div>
         </div>
     </div>
@@ -953,11 +1018,11 @@
             TOKEN_KEY: 'coaching_acc_token',
             USER_KEY: 'coaching_user_data',
             
-            refreshInterval: 300000, // 5 minutes (only when page is active)
+            refreshInterval: 0, // Disabled - manual refresh only
             retryAttempts: 3,
             retryDelay: 2000,
             debugMode: false,
-            smartRefresh: true // Enable smart refresh based on page visibility
+            smartRefresh: false // Disabled auto-refresh
         };
 
         // State management
@@ -1220,6 +1285,9 @@
             const stats = data.stats;
             const insights = data.insights;
 
+            // Update Today's Focus Card
+            updateTodaysFocus(stats);
+            
             // Update Action Center
             updateActionCenter(stats.actionCenter);
             
@@ -1232,14 +1300,81 @@
             // Update Fact Map
             updateFactMap(stats.factMap);
             
-            // Update Quarterly Game
+            // Update Current Quarter
             updateQuarterly(stats.quarterly);
+            
+            // Update Next Quarter Card
+            updateNextQuarter(stats.quarterly);
             
             // Update Health Overview
             updateHealthOverview(insights);
             
             // Update last refresh time
             updateLastRefreshTime();
+        }
+
+        // Today's Focus Update
+        function updateTodaysFocus(stats) {
+            // Set today's date
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('todayDate').textContent = today.toLocaleDateString('en-US', options);
+            
+            // Stack session status
+            const stackStatus = stats.stackSessions?.todayStatus || 'Not Started';
+            const stackEl = document.getElementById('todayStackStatus');
+            stackEl.textContent = stackStatus;
+            if (stackStatus === 'Completed') {
+                stackEl.style.color = '#4CAF50';
+            } else if (stackStatus === 'Not Started') {
+                stackEl.style.color = '#FF9800';
+                // Show reminder
+                const reminder = document.getElementById('todayReminder');
+                reminder.style.display = 'block';
+                reminder.textContent = '⏰ Remember to complete your daily Stack Session';
+            }
+            
+            // Actions moved today (you'll need to track this in your data)
+            const actionsMovedToday = stats.actionCenter?.movedToday || 0;
+            document.getElementById('actionsMovedToday').textContent = actionsMovedToday + ' actions';
+            
+            // Tasks completed today
+            const tasksCompletedToday = stats.actionCenter?.completedToday || 0;
+            document.getElementById('tasksCompletedToday').textContent = tasksCompletedToday + ' tasks';
+        }
+
+        // Next Quarter Update
+        function updateNextQuarter(data) {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const currentQuarter = Math.floor(currentMonth / 3) + 1;
+            
+            // Calculate next quarter
+            let nextQuarter = currentQuarter + 1;
+            let nextYear = currentYear;
+            if (nextQuarter > 4) {
+                nextQuarter = 1;
+                nextYear++;
+            }
+            
+            // Display next quarter
+            document.getElementById('nextQuarterDisplay').textContent = `Q${nextQuarter} ${nextYear}`;
+            
+            // Calculate days until next quarter
+            const nextQuarterStart = new Date(nextYear, (nextQuarter - 1) * 3, 1);
+            const today = new Date();
+            const daysUntil = Math.ceil((nextQuarterStart - today) / (1000 * 60 * 60 * 24));
+            document.getElementById('daysUntilNext').textContent = daysUntil;
+            
+            // Color coding based on proximity
+            const countdownEl = document.getElementById('daysUntilNext');
+            if (daysUntil <= 14) {
+                countdownEl.style.color = '#FF5722'; // Red for urgent
+            } else if (daysUntil <= 30) {
+                countdownEl.style.color = '#FF9800'; // Orange for soon
+            } else {
+                countdownEl.style.color = '#E91E63'; // Pink for normal
+            }
         }
 
         // Action Center Update
@@ -1422,21 +1557,27 @@
             
             // Update health percentage
             const healthPercent = insights.overallHealth || 0;
-            document.getElementById('healthPercent').textContent = `${healthPercent}%`;
+            const healthPercentEl = document.getElementById('healthPercent');
+            healthPercentEl.textContent = `${healthPercent}%`;
             
-            // Update health ring
-            const ring = document.getElementById('healthRing');
-            const circumference = 2 * Math.PI * 80;
-            const offset = circumference - (healthPercent / 100) * circumference;
-            ring.style.strokeDashoffset = offset;
-            
-            // Set ring color based on health
+            // Set color based on health
             if (healthPercent >= 70) {
-                ring.style.stroke = '#4CAF50';
+                healthPercentEl.style.color = '#4CAF50';
             } else if (healthPercent >= 40) {
-                ring.style.stroke = '#FFC107';
+                healthPercentEl.style.color = '#FFC107';
             } else {
-                ring.style.stroke = '#FF5722';
+                healthPercentEl.style.color = '#FF5722';
+            }
+            
+            // Update health bar
+            const healthBar = document.getElementById('healthBarFill');
+            healthBar.style.width = `${healthPercent}%`;
+            if (healthPercent >= 70) {
+                healthBar.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)';
+            } else if (healthPercent >= 40) {
+                healthBar.style.background = 'linear-gradient(90deg, #FFC107, #FFB74D)';
+            } else {
+                healthBar.style.background = 'linear-gradient(90deg, #FF5722, #E91E63)';
             }
             
             // Update suggested focus
@@ -1446,23 +1587,8 @@
             // Update trend
             const trendEl = document.getElementById('trendIndicator');
             const trend = insights.weeklyTrend || 'stable';
-            trendEl.textContent = `📊 Weekly Trend: ${trend}`;
+            trendEl.textContent = `📊 ${trend}`;
             trendEl.className = `trend-indicator trend-${trend.replace(' ', '-')}`;
-            
-            // Update data quality
-            if (insights.dataQuality) {
-                const qualityDiv = document.getElementById('dataQuality');
-                qualityDiv.innerHTML = '';
-                
-                Object.entries(insights.dataQuality).forEach(([key, value]) => {
-                    const item = document.createElement('div');
-                    item.innerHTML = `
-                        <span style="color: rgba(255, 255, 255, 0.6);">${key}:</span>
-                        <span style="font-weight: 600;">${value}</span>
-                    `;
-                    qualityDiv.appendChild(item);
-                });
-            }
         }
 
         // Refresh dashboard
