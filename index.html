@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warrior King Command Center</title>
+    <title>Analytics & Insights Dashboard - Coaching Command Center</title>
     <style>
         * {
             margin: 0;
@@ -39,13 +39,6 @@
             align-items: center;
             justify-content: center;
             gap: 15px;
-        }
-
-        .warrior-shield {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 50% 85%, 18% 100%, 0% 38%);
         }
 
         .dashboard-subtitle {
@@ -86,9 +79,39 @@
         /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            max-width: 1400px;
+            margin: 0 auto 40px;
             gap: 25px;
-            margin-bottom: 40px;
+            padding: 0 20px;
+        }
+
+        /* Ensure max 4 cards per row on wide screens */
+        @media (min-width: 1400px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* 3 cards per row on medium-large screens */
+        @media (min-width: 1000px) and (max-width: 1399px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* 2 cards per row on tablets */
+        @media (min-width: 700px) and (max-width: 999px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* 1 card per row on mobile */
+        @media (max-width: 699px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Card Styles */
@@ -425,11 +448,22 @@
             animation: pulse 2s infinite;
         }
 
-        /* Health Overview Card */
+        /* Health Overview Card - spans 2 columns on desktop, full width on smaller screens */
         .health-card {
             --card-color: #8BC34A;
             --card-color-light: #AED581;
-            grid-column: span 2;
+        }
+
+        @media (min-width: 1000px) {
+            .health-card {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 999px) {
+            .health-card {
+                grid-column: span 1;
+            }
         }
 
         .health-meter {
@@ -683,11 +717,15 @@
     <!-- Dashboard Header -->
     <div class="dashboard-header">
         <div class="dashboard-title">
-            <div class="warrior-shield"></div>
-            Warrior King Command Center
-            <div class="warrior-shield"></div>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" style="color: #667eea;">
+                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+            </svg>
+            Analytics & Insights Dashboard
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" style="color: #764ba2;">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+            </svg>
         </div>
-        <div class="dashboard-subtitle">"I am a sincere seducer of hearts and minds that crave purposeful results"</div>
+        <div class="dashboard-subtitle">Real-time Performance Metrics & Strategic Insights</div>
         <div id="authStatus" style="margin-top: 15px; text-align: center; color: #8BC34A; font-size: 14px;"></div>
     </div>
 
@@ -915,10 +953,11 @@
             TOKEN_KEY: 'coaching_acc_token',
             USER_KEY: 'coaching_user_data',
             
-            refreshInterval: 60000, // 1 minute
+            refreshInterval: 300000, // 5 minutes (only when page is active)
             retryAttempts: 3,
             retryDelay: 2000,
-            debugMode: true
+            debugMode: false,
+            smartRefresh: true // Enable smart refresh based on page visibility
         };
 
         // State management
@@ -927,6 +966,8 @@
         let retryCount = 0;
         let currentUser = null;
         let authToken = null;
+        let lastRefreshTime = null;
+        let isPageVisible = true;
 
         // Initialize dashboard on load
         document.addEventListener('DOMContentLoaded', function() {
@@ -941,8 +982,90 @@
             }
             
             loadDashboardData();
-            startAutoRefresh();
+            setupSmartRefresh();
         });
+
+        // Setup smart refresh based on page visibility
+        function setupSmartRefresh() {
+            // Track page visibility changes
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Also refresh when window gains focus
+            window.addEventListener('focus', handleWindowFocus);
+            
+            // Start the auto-refresh timer
+            startAutoRefresh();
+        }
+
+        // Handle page visibility changes
+        function handleVisibilityChange() {
+            if (!document.hidden) {
+                console.log('Page became visible');
+                isPageVisible = true;
+                
+                // Check if we should refresh based on time elapsed
+                const now = Date.now();
+                const timeSinceLastRefresh = now - lastRefreshTime;
+                
+                // If more than 30 seconds have passed, refresh data
+                if (timeSinceLastRefresh > 30000) {
+                    console.log('Refreshing data after returning to page');
+                    loadDashboardData();
+                }
+                
+                // Restart auto-refresh timer
+                startAutoRefresh();
+            } else {
+                console.log('Page became hidden');
+                isPageVisible = false;
+                
+                // Stop auto-refresh when page is hidden
+                stopAutoRefresh();
+            }
+        }
+
+        // Handle window focus events
+        function handleWindowFocus() {
+            const now = Date.now();
+            const timeSinceLastRefresh = now - lastRefreshTime;
+            
+            // If more than 60 seconds have passed since last refresh, update data
+            if (timeSinceLastRefresh > 60000) {
+                console.log('Refreshing data after window focus');
+                loadDashboardData();
+            }
+        }
+
+        // Start auto refresh timer
+        function startAutoRefresh() {
+            // Clear any existing timer
+            stopAutoRefresh();
+            
+            // Only set timer if smart refresh is enabled and page is visible
+            if (CONFIG.smartRefresh && CONFIG.refreshInterval > 0 && isPageVisible) {
+                refreshTimer = setInterval(() => {
+                    if (isPageVisible) {
+                        loadDashboardData();
+                    }
+                }, CONFIG.refreshInterval);
+                
+                if (CONFIG.debugMode) {
+                    console.log('Auto-refresh started (every', CONFIG.refreshInterval / 1000, 'seconds)');
+                }
+            }
+        }
+
+        // Stop auto refresh timer
+        function stopAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+                
+                if (CONFIG.debugMode) {
+                    console.log('Auto-refresh stopped');
+                }
+            }
+        }
 
         // Check authentication from Unified Dashboard
         function checkAuthentication() {
@@ -1077,6 +1200,9 @@
                 hideLoadingOverlay();
                 showNotification('Dashboard updated successfully', 'success');
                 retryCount = 0;
+                
+                // Track last refresh time
+                lastRefreshTime = Date.now();
 
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
@@ -1345,20 +1471,13 @@
             button.disabled = true;
             button.classList.add('loading');
             
+            // Track manual refresh
+            console.log('Manual refresh triggered');
+            
             loadDashboardData().finally(() => {
                 button.disabled = false;
                 button.classList.remove('loading');
             });
-        }
-
-        // Auto refresh
-        function startAutoRefresh() {
-            if (refreshTimer) {
-                clearInterval(refreshTimer);
-            }
-            refreshTimer = setInterval(() => {
-                loadDashboardData();
-            }, CONFIG.refreshInterval);
         }
 
         // Error handling
