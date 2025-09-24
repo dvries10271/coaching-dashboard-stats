@@ -891,7 +891,8 @@
     <script>
         // Configuration
         const CONFIG = {
-            webhookUrl: 'https://your-n8n-url.app.n8n.cloud/webhook/dashboard/load-all-stats',
+            // Replace this with your actual n8n instance URL
+            webhookUrl: 'https://your-n8n-instance.app.n8n.cloud/webhook/dashboard/load-all-stats',
             refreshInterval: 60000, // 1 minute
             retryAttempts: 3,
             retryDelay: 2000
@@ -914,14 +915,23 @@
             try {
                 console.log('Fetching dashboard data...');
                 
+                // Get stored credentials
+                const userId = localStorage.getItem('user_id') || 'test_user';
+                const userEmail = localStorage.getItem('user_email') || 'test@example.com';
+                const token = localStorage.getItem('coaching_acc_token') || 'test_token';
+                
+                console.log('Sending request with:', { userId, userEmail });
+                
                 const response = await fetch(CONFIG.webhookUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        user_id: localStorage.getItem('user_id') || 'default',
-                        email: localStorage.getItem('user_email') || 'default@example.com'
+                        user_id: userId,
+                        email: userEmail,
+                        token: token
                     })
                 });
 
