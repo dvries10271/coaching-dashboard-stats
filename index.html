@@ -688,6 +688,23 @@
             <div class="warrior-shield"></div>
         </div>
         <div class="dashboard-subtitle">"I am a sincere seducer of hearts and minds that crave purposeful results"</div>
+        <div id="authStatus" style="margin-top: 15px; text-align: center; color: #8BC34A; font-size: 14px;"></div>
+    </div>
+
+    <!-- Authentication Required Message (hidden when logged in) -->
+    <div id="authRequired" style="display: none; text-align: center; padding: 40px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; margin: 20px auto; max-width: 500px;">
+        <h2 style="color: #FF9800; margin-bottom: 20px;">Authentication Required</h2>
+        <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 30px;">
+            Please log in through the main Coaching Dashboard to access your statistics.
+        </p>
+        <a href="https://dvries10271.github.io/coaching-dashboard/" 
+           style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea, #764ba2); 
+                  color: white; border-radius: 8px; text-decoration: none; font-weight: 600; 
+                  transition: transform 0.3s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);"
+           onmouseover="this.style.transform='scale(1.05)'" 
+           onmouseout="this.style.transform='scale(1)'">
+            Go to Login Dashboard
+        </a>
     </div>
 
     <!-- Stats Grid -->
@@ -891,63 +908,168 @@
     <script>
         // Configuration
         const CONFIG = {
-            // Replace this with your actual n8n instance URL
+            // Production n8n webhook URL
             webhookUrl: 'https://n8n-production-3280.up.railway.app/webhook/dashboard/load-all-stats',
+            
+            // Authentication keys (matching Unified Dashboard)
+            TOKEN_KEY: 'coaching_acc_token',
+            USER_KEY: 'coaching_user_data',
+            
             refreshInterval: 60000, // 1 minute
             retryAttempts: 3,
-            retryDelay: 2000
+            retryDelay: 2000,
+            debugMode: true
         };
 
         // State management
         let dashboardData = null;
         let refreshTimer = null;
         let retryCount = 0;
+        let currentUser = null;
+        let authToken = null;
 
         // Initialize dashboard on load
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Dashboard initializing...');
+            
+            // Check authentication from Unified Dashboard
+            if (!checkAuthentication()) {
+                // Redirect to main login if not authenticated
+                alert('Please log in through the main Coaching Dashboard first');
+                window.location.href = 'https://dvries10271.github.io/coaching-dashboard/';
+                return;
+            }
+            
             loadDashboardData();
             startAutoRefresh();
         });
+
+        // Check authentication from Unified Dashboard
+        function checkAuthentication() {
+            // Get authentication data from localStorage (set by Unified Dashboard)
+            const savedToken = localStorage.getItem(CONFIG.TOKEN_KEY);
+            const savedUser = localStorage.getItem(CONFIG.USER_KEY);
+            
+            // Also check for individual user data keys that Unified Dashboard sets
+            const userEmail = localStorage.getItem('coaching_user_email');
+            const userName = localStorage.getItem('coaching_user_name');
+            
+            if (!savedToken && !userEmail) {
+                console.error('No authentication found');
+                showAuthRequired();
+                return false;
+            }
+            
+            try {
+                authToken = savedToken;
+                
+                // Try to parse saved user data
+                if (savedUser) {
+                    currentUser = JSON.parse(savedUser);
+                } else {
+                    // Construct user object from individual localStorage items
+                    currentUser = {
+                        email: userEmail,
+                        name: userName,
+                        user_id: localStorage.getItem('user_id') || userEmail,
+                        profile: {
+                            kolbe: localStorage.getItem('coaching_user_kolbe'),
+                            color: localStorage.getItem('coaching_user_color')
+                        }
+                    };
+                }
+                
+                console.log('Authenticated as:', currentUser.email);
+                
+                // Update auth status display
+                document.getElementById('authStatus').innerHTML = 
+                    `Logged in as: <strong>${currentUser.email}</strong> | ` +
+                    `<a href="#" onclick="logout()" style="color: #FF9800;">Logout</a>`;
+                
+                // Hide auth required message
+                document.getElementById('authRequired').style.display = 'none';
+                document.querySelector('.stats-grid').style.display = 'grid';
+                
+                return true;
+            } catch (error) {
+                console.error('Error parsing authentication data:', error);
+                showAuthRequired();
+                return false;
+            }
+        }
+
+        function showAuthRequired() {
+            document.getElementById('authRequired').style.display = 'block';
+            document.querySelector('.stats-grid').style.display = 'none';
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        function logout() {
+            // Clear all authentication data
+            localStorage.removeItem(CONFIG.TOKEN_KEY);
+            localStorage.removeItem(CONFIG.USER_KEY);
+            localStorage.removeItem('coaching_user_email');
+            localStorage.removeItem('coaching_user_name');
+            localStorage.removeItem('coaching_user_kolbe');
+            localStorage.removeItem('coaching_user_color');
+            
+            // Redirect to main dashboard
+            window.location.href = 'https://dvries10271.github.io/coaching-dashboard/';
+        }
 
         // Main data loading function
         async function loadDashboardData() {
             try {
                 console.log('Fetching dashboard data...');
                 
-                // Get stored credentials
-                const userId = localStorage.getItem('user_id') || 'test_user';
-                const userEmail = localStorage.getItem('user_email') || 'test@example.com';
-                const token = localStorage.getItem('coaching_acc_token') || 'test_token';
+                // Use authenticated user data from Unified Dashboard
+                const userId = currentUser?.user_id || currentUser?.id || 'unknown';
+                const userEmail = currentUser?.email || 'unknown@example.com';
                 
-                console.log('Sending request with:', { userId, userEmail });
+                console.log('Sending request for user:', userEmail);
                 
                 const response = await fetch(CONFIG.webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${authToken}` // Include auth token
                     },
                     body: JSON.stringify({
                         user_id: userId,
                         email: userEmail,
-                        token: token
+                        token: authToken,
+                        // Include additional user data if available
+                        profile: currentUser?.profile || {}
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    // Try to get error details from response
+                    const errorText = await response.text();
+                    console.error('Server response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
                 }
 
                 const data = await response.json();
                 console.log('Data received:', data);
                 
-                // Handle array response (based on your webhook structure)
-                if (Array.isArray(data) && data.length > 0) {
+                // Handle different response formats
+                if (data.errorMessage) {
+                    // n8n error response
+                    console.error('n8n error:', data.errorMessage);
+                    throw new Error(data.errorMessage);
+                } else if (Array.isArray(data) && data.length > 0) {
+                    // Array response
                     dashboardData = data[0];
                 } else if (data.stats) {
+                    // Direct object response
                     dashboardData = data;
+                } else if (data.json && data.json.stats) {
+                    // Wrapped response
+                    dashboardData = data.json;
                 } else {
+                    console.error('Unexpected data structure:', data);
                     throw new Error('Invalid data structure received');
                 }
 
