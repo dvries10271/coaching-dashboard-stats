@@ -76,6 +76,19 @@
             animation: spin 1s linear infinite;
         }
 
+        .badge {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.badge.done          { background:#4CAF50; }   /* green */
+.badge.in-progress   { background:#FFC107; }   /* amber */
+.badge.not-started,
+.badge.pending       { background:#9E9E9E; }   /* grey  */
+
         /* Stats Grid */
         .stats-grid {
             display: grid;
@@ -778,47 +791,62 @@
             </div>
         </div>
 
-        <!-- Next Quarter Card -->
-        <div class="stats-card next-quarter-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
-                    </svg>
-                    Next Quarter Planning
-                </div>
-            </div>
-            <div class="next-quarter-display" id="nextQuarterDisplay" style="text-align: center; font-size: 36px; font-weight: bold; color: #E91E63; margin: 20px 0;">
-                Loading...
-            </div>
-            <div class="quarter-countdown" style="text-align: center; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; margin: 15px 0;">
-                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Starts in</div>
-                <div style="font-size: 48px; font-weight: bold; color: #E91E63;" id="daysUntilNext">--</div>
-                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Days</div>
-            </div>
-            <div id="nextQuarterGoals" style="margin-top: 20px;">
-                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6); margin-bottom: 10px;">Focus Areas:</div>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                    <div class="focus-area" style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center; font-size: 12px;">
-                        <div style="font-weight: 600; color: #E91E63;">Body</div>
-                        <div style="color: rgba(255, 255, 255, 0.6); margin-top: 5px;">Prepare Goals</div>
-                    </div>
-                    <div class="focus-area" style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center; font-size: 12px;">
-                        <div style="font-weight: 600; color: #E91E63;">Being</div>
-                        <div style="color: rgba(255, 255, 255, 0.6); margin-top: 5px;">Prepare Goals</div>
-                    </div>
-                    <div class="focus-area" style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center; font-size: 12px;">
-                        <div style="font-weight: 600; color: #E91E63;">Balance</div>
-                        <div style="color: rgba(255, 255, 255, 0.6); margin-top: 5px;">Prepare Goals</div>
-                    </div>
-                    <div class="focus-area" style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center; font-size: 12px;">
-                        <div style="font-weight: 600; color: #E91E63;">Business</div>
-                        <div style="color: rgba(255, 255, 255, 0.6); margin-top: 5px;">Prepare Goals</div>
-                    </div>
-                </div>
-            </div>
-            <a href="/quarterly_impossible_game/" class="action-button" style="background: linear-gradient(135deg, #E91E63, #F06292);">Plan Next Quarter</a>
-        </div>
+<!-- Next Quarter Card -->
+<div class="stats-card next-quarter-card">
+  <div class="card-header">
+    <div class="card-title">
+      <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path
+          d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z" />
+      </svg>
+      Next Quarter Planning
+    </div>
+  </div>
+
+  <!-- NEW meta row -->
+  <div class="quarter-meta" style="display:flex;gap:.75rem;justify-content:center;margin-top:6px;">
+    <span id="quarterStatusBadge" class="badge pending">Loading…</span>
+    <span id="quarterGoalText" class="goal-text" style="font-size:.85rem;color:#fff9;">—</span>
+  </div>
+
+  <div class="next-quarter-display" id="nextQuarterDisplay"
+       style="text-align:center;font-size:36px;font-weight:bold;color:#E91E63;margin:20px 0;">
+    Loading…
+  </div>
+
+  <div class="quarter-countdown"
+       style="text-align:center;padding:15px;background:rgba(255,255,255,.05);border-radius:10px;margin:15px 0;">
+    <div style="font-size:14px;color:rgba(255,255,255,.6);">Starts in</div>
+    <div id="daysUntilNext" style="font-size:48px;font-weight:bold;color:#E91E63;">--</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.6);">Days</div>
+  </div>
+
+  <div id="nextQuarterGoals" style="margin-top:20px;">
+    <div style="font-size:14px;color:rgba(255,255,255,.6);margin-bottom:10px;">Focus Areas:</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+      <div class="focus-area" style="padding:8px;background:rgba(255,255,255,.05);border-radius:8px;text-align:center;font-size:12px;">
+        <div style="font-weight:600;color:#E91E63;">Body</div>
+        <div style="color:rgba(255,255,255,.6);margin-top:5px;">Prepare Goals</div>
+      </div>
+      <div class="focus-area" style="padding:8px;background:rgba(255,255,255,.05);border-radius:8px;text-align:center;font-size:12px;">
+        <div style="font-weight:600;color:#E91E63;">Being</div>
+        <div style="color:rgba(255,255,255,.6);margin-top:5px;">Prepare Goals</div>
+      </div>
+      <div class="focus-area" style="padding:8px;background:rgba(255,255,255,.05);border-radius:8px;text-align:center;font-size:12px;">
+        <div style="font-weight:600;color:#E91E63;">Balance</div>
+        <div style="color:rgba(255,255,255,.6);margin-top:5px;">Prepare Goals</div>
+      </div>
+      <div class="focus-area" style="padding:8px;background:rgba(255,255,255,.05);border-radius:8px;text-align:center;font-size:12px;">
+        <div style="font-weight:600;color:#E91E63;">Business</div>
+        <div style="color:rgba(255,255,255,.6);margin-top:5px;">Prepare Goals</div>
+      </div>
+    </div>
+  </div>
+
+  <a href="/quarterly_impossible_game/" class="action-button"
+     style="background:linear-gradient(135deg,#E91E63,#F06292);">Plan Next Quarter</a>
+</div>
+
         <!-- Action Center Card -->
         <div class="stats-card action-center-card">
             <div class="card-header">
@@ -1343,40 +1371,46 @@
             document.getElementById('tasksCompletedToday').textContent = tasksCompletedToday + ' tasks';
         }
 
-        // Next Quarter Update
-        function updateNextQuarter(data) {
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            const currentQuarter = Math.floor(currentMonth / 3) + 1;
-            
-            // Calculate next quarter
-            let nextQuarter = currentQuarter + 1;
-            let nextYear = currentYear;
-            if (nextQuarter > 4) {
-                nextQuarter = 1;
-                nextYear++;
-            }
-            
-            // Display next quarter
-            document.getElementById('nextQuarterDisplay').textContent = `Q${nextQuarter} ${nextYear}`;
-            
-            // Calculate days until next quarter
-            const nextQuarterStart = new Date(nextYear, (nextQuarter - 1) * 3, 1);
-            const today = new Date();
-            const daysUntil = Math.ceil((nextQuarterStart - today) / (1000 * 60 * 60 * 24));
-            document.getElementById('daysUntilNext').textContent = daysUntil;
-            
-            // Color coding based on proximity
-            const countdownEl = document.getElementById('daysUntilNext');
-            if (daysUntil <= 14) {
-                countdownEl.style.color = '#FF5722'; // Red for urgent
-            } else if (daysUntil <= 30) {
-                countdownEl.style.color = '#FF9800'; // Orange for soon
-            } else {
-                countdownEl.style.color = '#E91E63'; // Pink for normal
-            }
-        }
+// ─── Next-Quarter card refresh ────────────────────────────────────────────
+function updateNextQuarter(currentStats = {}) {
+  /* 1. Work out NEXT quarter & year from *today* (ignore payload) */
+  const today        = new Date();
+  const curQ         = Math.floor(today.getMonth() / 3) + 1;
+  const nextQNumber  = curQ === 4 ? 1 : curQ + 1;
+  const nextYear     = curQ === 4 ? today.getFullYear() + 1 : today.getFullYear();
+  const nextQuarter  = `Q${nextQNumber}`;
 
+  /* 2. Label */
+  document.getElementById('nextQuarterDisplay').textContent = `${nextQuarter} ${nextYear}`;
+
+  /* 3. Countdown */
+  const start = new Date(nextYear, (nextQNumber - 1) * 3, 1);   // First day of next Q
+  const daysLeft = Math.max(0,
+        Math.ceil((start - today) / 86_400_000));               // ms-per-day
+  const daysEl = document.getElementById('daysUntilNext');
+  daysEl.textContent = daysLeft;
+
+  /* 4. Urgency colour */
+  if (daysLeft <= 14)      { daysEl.style.color = '#FF5722'; }   // urgent
+  else if (daysLeft <= 30) { daysEl.style.color = '#FF9800'; }   // soon
+  else                     { daysEl.style.color = '#E91E63'; }   // normal
+
+  /* 5. Optional: meta row (status + goal) */
+  // Example placeholders – swap in real fields if/when you have them
+  const status   = currentStats.nextQuarterStatus ?? 'Not Started';
+  const goalText = currentStats.nextQuarterGoal   ?? 'Define Goals';
+
+  const badgeEl  = document.getElementById('quarterStatusBadge');
+  const goalEl   = document.getElementById('quarterGoalText');
+
+  badgeEl.textContent = status;
+  goalEl.textContent  = goalText;
+
+  badgeEl.className = 'badge ' + (
+      status.toLowerCase().includes('done')      ? 'done'        :
+      status.toLowerCase().includes('progress')  ? 'in-progress' :
+                                                   'pending');
+}
         // Action Center Update
         function updateActionCenter(data) {
             document.getElementById('activeTasks').textContent = data.activeCount || 0;
