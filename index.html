@@ -948,6 +948,7 @@
         let currentUser = null;
         let authToken = null;
         let lastRefreshTime = null;
+        let isLoading = false; // Prevent multiple simultaneous requests
 
         // Initialize dashboard on load
         document.addEventListener('DOMContentLoaded', function() {
@@ -959,8 +960,41 @@
                 return;
             }
             
+            // Only load data once on initial load
             loadDashboardData();
+            
+            // Set up visibility handlers with debouncing
+            setupVisibilityHandlers();
         });
+
+        // Setup visibility handlers with debouncing
+        function setupVisibilityHandlers() {
+            let visibilityTimeout = null;
+            
+            document.addEventListener('visibilitychange', function() {
+                // Clear any pending timeout
+                if (visibilityTimeout) {
+                    clearTimeout(visibilityTimeout);
+                }
+                
+                if (!document.hidden) {
+                    // Debounce the refresh - wait 500ms before loading
+                    visibilityTimeout = setTimeout(() => {
+                        const now = Date.now();
+                        const timeSinceLastRefresh = now - lastRefreshTime;
+                        
+                        // Only refresh if more than 60 seconds have passed and not currently loading
+                        if (timeSinceLastRefresh > 60000 && !isLoading) {
+                            console.log('Refreshing data after returning to page');
+                            loadDashboardData();
+                        }
+                    }, 500);
+                }
+            });
+            
+            // Remove the focus handler to prevent duplicate requests
+            // The visibility change handler is sufficient
+        }
 
         // Check authentication
         function checkAuthentication() {
@@ -1026,8 +1060,16 @@
             window.location.href = 'https://dvries10271.github.io/coaching-dashboard/';
         }
 
-        // Main data loading function - FIXED
+        // Main data loading function - FIXED with better error handling
         async function loadDashboardData() {
+            // Prevent multiple simultaneous requests
+            if (isLoading) {
+                console.log('Already loading data, skipping request');
+                return;
+            }
+            
+            isLoading = true;
+            
             try {
                 console.log('Fetching dashboard data...');
                 
@@ -1036,23 +1078,30 @@
                 
                 console.log('Sending request for user:', userEmail);
                 
+                // Add timeout to prevent hanging requests
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+                
                 const response = await fetch(CONFIG.webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({
                         user_id: userId,
                         email: userEmail,
-                        token: authToken,
+                        token: authToken || 'no-token',
                         profile: currentUser?.profile || {}
-                    })
+                    }),
+                    signal: controller.signal,
+                    mode: 'cors' // Explicitly set CORS mode
                 });
+                
+                clearTimeout(timeoutId);
 
                 if (!response.ok) {
-                    const errorText = await response.text();
+                    const errorText = await response.text().catch(() => 'No error details');
                     console.error('Server response:', errorText);
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -1067,7 +1116,9 @@
                     dashboardData = data;
                 } else {
                     console.error('Unexpected data structure:', data);
-                    throw new Error('Invalid data structure received');
+                    // Use mock data for testing if real data fails
+                    dashboardData = getMockData();
+                    showNotification('Using sample data - webhook may be unavailable', 'info');
                 }
 
                 updateDashboard(dashboardData);
@@ -1078,8 +1129,87 @@
 
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
+                
+                // Check if it's an abort error
+                if (error.name === 'AbortError') {
+                    console.log('Request timed out');
+                    showNotification('Request timed out. Please check your connection.', 'error');
+                }
+                
                 handleLoadError(error);
+            } finally {
+                isLoading = false;
             }
+        }
+
+        // Mock data function for testing
+        function getMockData() {
+            return {
+                success: true,
+                timestamp: new Date().toISOString(),
+                stats: {
+                    actionCenter: {
+                        activeCount: 0,
+                        capacityUsed: 0,
+                        capacityMax: 40,
+                        completedThisWeek: 0,
+                        completedToday: 0,
+                        movedToday: 0,
+                        blockedCount: 0,
+                        totalItems: 0
+                    },
+                    assessment: {
+                        status: "Not Started",
+                        lastCompleted: null,
+                        primaryColor: "Unknown",
+                        secondaryColor: "Unknown",
+                        kolbeProfile: "0-0-0-0"
+                    },
+                    stackSessions: {
+                        todayStatus: "Not Started",
+                        streak: 0,
+                        weeklyCount: 0,
+                        totalSessions: 0,
+                        lastSessionType: "None"
+                    },
+                    factMap: {
+                        dueDate: "Unknown",
+                        domainsComplete: 0,
+                        domainsTotal: 4,
+                        status: "Not Started",
+                        month: new Date().toLocaleDateString('en-US', { month: 'long' })
+                    },
+                    quarterly: {
+                        quarter: `Q${Math.ceil((new Date().getMonth() + 1) / 3)}`,
+                        year: new Date().getFullYear(),
+                        daysLeft: 90,
+                        progress: 0,
+                        status: "Not Started",
+                        goal: "Not Set"
+                    },
+                    nextQuarter: {
+                        quarter: `Q${Math.ceil((new Date().getMonth() + 1) / 3) % 4 + 1}`,
+                        year: new Date().getFullYear(),
+                        startsInDays: 90,
+                        startDate: "Unknown",
+                        focusAreas: [],
+                        status: "Not Planned",
+                        goals: "Not Set"
+                    }
+                },
+                insights: {
+                    overallHealth: 0,
+                    suggestedFocus: "Connect to database to load your data",
+                    weeklyTrend: "unknown",
+                    dataQuality: {
+                        ideas: 0,
+                        sessions: 0,
+                        profiles: 0,
+                        factMaps: 0,
+                        quarterlyMaps: 0
+                    }
+                }
+            };
         }
 
         // Update all dashboard elements - FIXED
@@ -1355,18 +1485,23 @@
             });
         }
 
-        // Error handling
+        // Error handling - reduce retry attempts to avoid spam
         function handleLoadError(error) {
             retryCount++;
             
-            if (retryCount <= CONFIG.retryAttempts) {
-                console.log(`Retrying... (${retryCount}/${CONFIG.retryAttempts})`);
+            if (retryCount <= 2) { // Reduced from 3 to 2 retries
+                console.log(`Retrying... (${retryCount}/2)`);
                 setTimeout(() => {
                     loadDashboardData();
                 }, CONFIG.retryDelay * retryCount);
             } else {
-                showNotification('Unable to load dashboard data. Please refresh manually.', 'error');
+                // If all retries fail, load mock data so the dashboard is still functional
+                console.log('All retries failed, loading mock data');
+                dashboardData = getMockData();
+                updateDashboard(dashboardData);
                 hideLoadingOverlay();
+                showNotification('Unable to connect to server. Showing sample data.', 'error');
+                retryCount = 0; // Reset for next attempt
             }
         }
 
