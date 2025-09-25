@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics & Insights Dashboard - Coaching Command Center</title>
+    <title>Analytics Dashboard - Test Version</title>
     <style>
         * {
             margin: 0;
@@ -12,19 +12,16 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
             color: #ffffff;
             min-height: 100vh;
             padding: 20px;
-            position: relative;
         }
 
-        /* Header Styles */
         .dashboard-header {
             text-align: center;
             margin-bottom: 40px;
-            position: relative;
         }
 
         .dashboard-title {
@@ -35,19 +32,13 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
         }
 
         .dashboard-subtitle {
             color: rgba(255, 255, 255, 0.7);
             font-size: 18px;
-            font-style: italic;
         }
 
-        /* Loading Overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -76,527 +67,45 @@
             animation: spin 1s linear infinite;
         }
 
-        .badge {
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: .04em;
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
-        .badge.done { background:#4CAF50; }
-        .badge.in-progress { background:#FFC107; }
-        .badge.not-started,
-        .badge.pending { background:#9E9E9E; }
-
-        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            max-width: 1400px;
-            margin: 0 auto 40px;
             gap: 25px;
-            padding: 0 20px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
-        @media (min-width: 1400px) {
-            .stats-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-
-        @media (min-width: 1000px) and (max-width: 1399px) {
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (min-width: 700px) and (max-width: 999px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 699px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Card Styles */
         .stats-card {
             background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
             border-radius: 16px;
             padding: 25px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stats-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--card-color), var(--card-color-light));
-        }
-
-        .stats-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
         }
 
         .card-title {
             font-size: 18px;
             font-weight: 600;
-            color: var(--card-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            margin-bottom: 20px;
+            color: #667eea;
         }
 
-        .card-icon {
-            width: 24px;
-            height: 24px;
-            opacity: 0.8;
-        }
-
-        /* Health Bar Styles */
-        .health-bar {
-            width: 100%;
-            height: 24px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            overflow: hidden;
-            margin: 20px 0;
-            position: relative;
-        }
-
-        .health-bar-fill {
-            height: 100%;
-            border-radius: 12px;
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Action Center Card */
-        .action-center-card {
-            --card-color: #03A9F4;
-            --card-color-light: #00BCD4;
-        }
-
-        .active-tasks-number {
-            font-size: 64px;
-            font-weight: bold;
-            line-height: 1;
-            margin: 20px 0 10px;
-            transition: all 0.3s ease;
-        }
-
-        .capacity-warning {
-            background: rgba(255, 87, 34, 0.2);
-            border: 1px solid #FF5722;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 15px;
-            font-size: 14px;
-            color: #FF9800;
-            display: none;
-        }
-
-        .capacity-warning.show {
-            display: block;
-            animation: slideIn 0.3s ease;
-        }
-
-        .capacity-bar-container {
-            width: 100%;
-            height: 24px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            overflow: hidden;
-            margin: 15px 0;
-            position: relative;
-        }
-
-        .capacity-bar {
-            height: 100%;
-            border-radius: 12px;
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .capacity-bar::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        .capacity-bar.green {
-            background: linear-gradient(90deg, #4CAF50, #8BC34A);
-        }
-
-        .capacity-bar.yellow {
-            background: linear-gradient(90deg, #FFC107, #FFB74D);
-        }
-
-        .capacity-bar.red {
-            background: linear-gradient(90deg, #FF5722, #E91E63);
-        }
-
-        .capacity-text {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            text-align: center;
-        }
-
-        /* Assessment Card */
-        .assessment-card {
-            --card-color: #9C27B0;
-            --card-color-light: #BA68C8;
-        }
-
-        .assessment-complete {
-            display: inline-block;
-            background: linear-gradient(135deg, #4CAF50, #8BC34A);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .color-profiles {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .color-badge {
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .color-white { background: linear-gradient(135deg, #E0E0E0, #BDBDBD); color: #333; }
-        .color-red { background: linear-gradient(135deg, #F44336, #E91E63); }
-        .color-blue { background: linear-gradient(135deg, #2196F3, #03A9F4); }
-        .color-yellow { background: linear-gradient(135deg, #FFD700, #FFC107); color: #333; }
-
-        .kolbe-profile {
-            margin-top: 15px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 18px;
-            text-align: center;
-            letter-spacing: 3px;
-        }
-
-        /* Stack Sessions Card */
-        .stack-sessions-card {
-            --card-color: #FFC107;
-            --card-color-light: #FFD54F;
-        }
-
-        .streak-display {
+        .card-value {
             font-size: 48px;
             font-weight: bold;
-            color: #FFC107;
-            text-align: center;
             margin: 20px 0;
         }
 
-        .fire-emoji {
-            animation: flame 1.5s ease-in-out infinite;
-            display: inline-block;
-        }
-
-        .session-status {
-            text-align: center;
-            padding: 12px;
-            border-radius: 10px;
-            margin: 15px 0;
-            font-weight: 600;
-        }
-
-        .session-status.completed {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(139, 195, 74, 0.2));
-            color: #8BC34A;
-            border: 1px solid #8BC34A;
-        }
-
-        .session-status.not-started {
-            background: rgba(255, 152, 0, 0.2);
-            color: #FF9800;
-            border: 1px solid #FF9800;
-        }
-
-        .weekly-sessions-bar {
-            display: flex;
-            gap: 5px;
-            margin: 20px 0;
-        }
-
-        .day-bar {
-            flex: 1;
-            height: 40px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .day-bar.completed {
-            background: linear-gradient(135deg, #4CAF50, #8BC34A);
-        }
-
-        /* Monthly Fact Map Card */
-        .fact-map-card {
-            --card-color: #4CAF50;
-            --card-color-light: #66BB6A;
-        }
-
-        .domain-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .domain-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-
-        .domain-item.complete {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(139, 195, 74, 0.2));
-            border-color: #4CAF50;
-        }
-
-        .domain-item:hover {
-            transform: scale(1.05);
-        }
-
-        .domain-icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
-
-        .domain-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .domain-status {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 5px;
-        }
-
-        /* Quarterly Game Card */
-        .quarterly-card {
-            --card-color: #00BCD4;
-            --card-color-light: #26C6DA;
-        }
-
-        .quarter-display {
-            font-size: 36px;
-            font-weight: bold;
-            text-align: center;
-            color: #00BCD4;
-            margin: 20px 0;
-        }
-
-        .days-remaining {
-            text-align: center;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            margin: 15px 0;
-        }
-
-        .days-number {
-            font-size: 48px;
-            font-weight: bold;
-            color: #FF9800;
-        }
-
-        .days-text {
+        .card-subtitle {
             font-size: 14px;
             color: rgba(255, 255, 255, 0.6);
         }
 
-        .urgent-badge {
-            background: linear-gradient(135deg, #FF5722, #E91E63);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            animation: pulse 2s infinite;
-        }
-
-        /* Card color themes */
-        .today-focus-card {
-            --card-color: #667eea;
-            --card-color-light: #764ba2;
-        }
-
-        .next-quarter-card {
-            --card-color: #E91E63;
-            --card-color-light: #F06292;
-        }
-
-        .health-card {
-            --card-color: #8BC34A;
-            --card-color-light: #AED581;
-        }
-
-        .insight-box {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        .insight-title {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 10px;
-        }
-
-        .suggested-focus {
-            font-size: 18px;
-            font-weight: 600;
-            color: #FFC107;
-        }
-
-        .trend-indicator {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            margin-top: 10px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .trend-ascending {
-            background: rgba(76, 175, 80, 0.2);
-            color: #4CAF50;
-        }
-
-        .trend-stable {
-            background: rgba(33, 150, 243, 0.2);
-            color: #2196F3;
-        }
-
-        .trend-descending {
-            background: rgba(255, 152, 0, 0.2);
-            color: #FF9800;
-        }
-
-        /* Action Buttons */
-        .action-button {
-            display: inline-block;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, var(--card-color), var(--card-color-light));
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            margin-top: 15px;
-        }
-
-        .action-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-        }
-
-        /* Refresh Controls */
-        .refresh-controls {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: rgba(30, 30, 46, 0.95);
-            padding: 15px 20px;
-            border-radius: 50px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .last-update {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .refresh-button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .refresh-button:hover {
-            transform: scale(1.05);
-        }
-
-        .refresh-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .refresh-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .refresh-button.loading .refresh-icon {
-            animation: spin 1s linear infinite;
-        }
-
-        /* Notifications */
         .notification {
             position: fixed;
             top: 30px;
@@ -605,7 +114,7 @@
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            transition: right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transition: right 0.4s ease;
             z-index: 10000;
         }
 
@@ -628,962 +137,177 @@
             color: white;
         }
 
-        /* Animations */
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .refresh-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        .refresh-button:hover {
+            transform: scale(1.05);
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes flame {
-            0%, 100% { transform: scale(1) rotate(-3deg); }
-            50% { transform: scale(1.1) rotate(3deg); }
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .dashboard-title {
-                font-size: 32px;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .refresh-controls {
-                bottom: 20px;
-                right: 20px;
-                left: 20px;
-                justify-content: space-between;
-            }
+        .refresh-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
     </div>
 
-    <!-- Dashboard Header -->
     <div class="dashboard-header">
-        <div class="dashboard-title">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" style="color: #667eea;">
-                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-            </svg>
-            Analytics & Insights Dashboard
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" style="color: #764ba2;">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-            </svg>
-        </div>
-        <div class="dashboard-subtitle">Real-time Performance Metrics & Strategic Insights</div>
-        <div id="authStatus" style="margin-top: 15px; text-align: center; color: #8BC34A; font-size: 14px;"></div>
+        <div class="dashboard-title">Analytics Dashboard</div>
+        <div class="dashboard-subtitle">Test Version - Check Console for Debug Info</div>
+        <div id="authStatus" style="margin-top: 15px; color: #8BC34A;"></div>
     </div>
 
-    <!-- Authentication Required Message -->
-    <div id="authRequired" style="display: none; text-align: center; padding: 40px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; margin: 20px auto; max-width: 500px;">
-        <h2 style="color: #FF9800; margin-bottom: 20px;">Authentication Required</h2>
-        <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 30px;">
-            Please log in through the main Coaching Dashboard to access your statistics.
-        </p>
-        <a href="https://dvries10271.github.io/coaching-dashboard/" 
-           style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea, #764ba2); 
-                  color: white; border-radius: 8px; text-decoration: none; font-weight: 600; 
-                  transition: transform 0.3s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);"
-           onmouseover="this.style.transform='scale(1.05)'" 
-           onmouseout="this.style.transform='scale(1)'">
-            Go to Login Dashboard
-        </a>
+    <div class="stats-grid" id="statsGrid">
+        <!-- Cards will be dynamically inserted here -->
     </div>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
-        <!-- 1) Today's Focus -->
-        <div class="stats-card today-focus-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-                    </svg>
-                    Today's Focus
-                </div>
-            </div>
-            <div class="today-date" id="todayDate" style="text-align: center; font-size: 20px; font-weight: 600; color: #667eea; margin: 15px 0;"></div>
-            <div class="today-metrics">
-                <div class="metric-item" style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0;">
-                    <div class="metric-label" style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 5px;">Stack Session</div>
-                    <div class="metric-value" id="todayStackStatus" style="font-size: 18px; font-weight: 600; color: #FFC107;">Loading...</div>
-                </div>
-                <div class="metric-item" style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0;">
-                    <div class="metric-label" style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 5px;">Actions Moved</div>
-                    <div class="metric-value" id="actionsMovedToday" style="font-size: 18px; font-weight: 600; color: #03A9F4;">Loading...</div>
-                </div>
-                <div class="metric-item" style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0;">
-                    <div class="metric-label" style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 5px;">Tasks Completed</div>
-                    <div class="metric-value" id="tasksCompletedToday" style="font-size: 18px; font-weight: 600; color: #4CAF50;">Loading...</div>
-                </div>
-            </div>
-            <div class="today-reminder" id="todayReminder" style="margin-top: 15px; padding: 12px; background: rgba(255,152,0,0.1); border: 1px solid rgba(255,152,0,0.3); border-radius: 8px; font-size: 14px; color: #FF9800; display: none;"></div>
-        </div>
-
-        <!-- 2) Stack Sessions -->
-        <div class="stats-card stack-sessions-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
-                    </svg>
-                    Stack Sessions
-                </div>
-            </div>
-            <div class="session-status" id="sessionStatus">Loading...</div>
-            <div class="streak-display">
-                <span id="streakCount">--</span>
-                <span class="fire-emoji" id="fireEmoji" style="display: none;">🔥</span>
-            </div>
-            <div style="text-align: center; font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 20px;">Day Streak</div>
-            <div class="weekly-sessions-bar" id="weeklyBar"></div>
-            <div style="text-align: center; margin-top: 25px;">
-                <div id="weeklySessionsText" style="font-size: 14px; color: rgba(255,255,255,0.7);">-- / 7 this week</div>
-                <div id="totalSessionsText" style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 5px;">Total: -- sessions</div>
-            </div>
-            <a href="/session-form-submit/" class="action-button" id="startSessionBtn">Start Today's Session</a>
-        </div>
-
-        <!-- 3) Action Command Center -->
-        <div class="stats-card action-center-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                    </svg>
-                    Action Command Center
-                </div>
-            </div>
-            <div class="active-tasks-number" id="activeTasks">--</div>
-            <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 15px;">Active Tasks</div>
-            <div class="capacity-bar-container">
-                <div class="capacity-bar" id="capacityBar" style="width: 0%"></div>
-            </div>
-            <div class="capacity-text" id="capacityText">Loading...</div>
-            <div class="capacity-warning" id="capacityWarning">⚠️ Over capacity! Consider completing or deferring some tasks.</div>
-            <div style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 14px;">
-                <span id="weeklyComplete">-- completed this week</span>
-                <span id="totalItems" style="color: rgba(255,255,255,0.5);">Total: --</span>
-            </div>
-            <a href="/Action-Command-Center/" class="action-button">Open Kanban Board</a>
-        </div>
-
-        <!-- 4) System Health -->
-        <div class="stats-card health-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                    </svg>
-                    System Health
-                </div>
-            </div>
-            <div style="text-align: center; padding: 20px 0;">
-                <div style="font-size: 64px; font-weight: bold; line-height: 1;" id="healthPercent">--%</div>
-                <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 10px;">Overall Health Score</div>
-            </div>
-            <div class="health-bar">
-                <div class="health-bar-fill" id="healthBarFill" style="width: 0%;"></div>
-            </div>
-            <div class="insight-box">
-                <div class="insight-title">Suggested Focus</div>
-                <div class="suggested-focus" id="suggestedFocus">Loading...</div>
-            </div>
-            <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-                <div class="trend-indicator" id="trendIndicator">Loading...</div>
-                <button class="refresh-button" onclick="refreshDashboard()" style="padding: 8px 16px; font-size: 14px;"><span>↻ Refresh</span></button>
-            </div>
-        </div>
-
-        <!-- 5) Monthly Fact Map -->
-        <div class="stats-card fact-map-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                    </svg>
-                    Monthly Fact Map
-                </div>
-            </div>
-            <div id="monthDisplay" style="text-align: center; font-size: 24px; font-weight: bold; margin: 15px 0; color: #4CAF50;">Loading...</div>
-            <div class="domain-grid" id="domainGrid">
-                <div class="domain-item" data-domain="body"><div class="domain-icon">💪</div><div class="domain-name">Body</div><div class="domain-status">Pending</div></div>
-                <div class="domain-item" data-domain="being"><div class="domain-icon">🧠</div><div class="domain-name">Being</div><div class="domain-status">Pending</div></div>
-                <div class="domain-item" data-domain="balance"><div class="domain-icon">⚖️</div><div class="domain-name">Balance</div><div class="domain-status">Pending</div></div>
-                <div class="domain-item" data-domain="business"><div class="domain-icon">💼</div><div class="domain-name">Business</div><div class="domain-status">Pending</div></div>
-            </div>
-            <div style="text-align: center; margin-top: 20px;">
-                <div id="factMapProgress" style="font-size: 16px; font-weight: 600;">-- / 4 Complete</div>
-                <div id="factMapDue" style="font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 5px;">Due: --</div>
-            </div>
-            <a href="/monthly-fact-map/" class="action-button">Update Fact Map</a>
-        </div>
-
-        <!-- 6) Quarterly Impossible Game -->
-        <div class="stats-card quarterly-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
-                    </svg>
-                    Quarterly Impossible Game
-                </div>
-            </div>
-            <div class="quarter-display" id="quarterDisplay">Loading...</div>
-            <div class="days-remaining">
-                <div class="days-number" id="daysNumber">--</div>
-                <div class="days-text">Days Remaining</div>
-                <span class="urgent-badge" id="urgentBadge" style="display: none;">URGENT</span>
-            </div>
-            <div id="quarterlyProgress" style="text-align: center; margin: 20px 0;">
-                <div style="font-size: 14px; color: rgba(255,255,255,0.6);">Progress</div>
-                <div style="font-size: 36px; font-weight: bold; color: #00BCD4;"><span id="progressPercent">--</span>%</div>
-            </div>
-            <div id="quarterlyGoal" style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-top: 15px; font-size: 14px; color: rgba(255,255,255,0.7);">Goal: Loading...</div>
-            <a href="/quarterly_impossible_game/" class="action-button">Set Quarterly Goals</a>
-        </div>
-
-        <!-- 7) Next-Quarter Planning -->
-        <div class="stats-card next-quarter-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
-                    </svg>
-                    Next Quarter Planning
-                </div>
-            </div>
-            <div class="quarter-meta" style="display:flex;gap:.75rem;justify-content:center;margin-top:6px;">
-                <span id="quarterStatusBadge" class="badge pending">Loading…</span>
-                <span id="quarterGoalText" class="goal-text" style="font-size:.85rem;color:#fff9;">—</span>
-            </div>
-            <div class="next-quarter-display" id="nextQuarterDisplay" style="text-align:center;font-size:36px;font-weight:bold;color:#E91E63;margin:20px 0;">Loading…</div>
-            <div class="quarter-countdown" style="text-align:center;padding:15px;background:rgba(255,255,255,.05);border-radius:10px;margin:15px 0;">
-                <div style="font-size:14px;color:rgba(255,255,255,.6);">Starts in</div>
-                <div id="daysUntilNext" style="font-size:48px;font-weight:bold;color:#E91E63;">--</div>
-                <div style="font-size:14px;color:rgba(255,255,255,.6);">Days</div>
-            </div>
-            <div id="nextQuarterGoals" style="margin-top:20px;">
-                <div style="font-size:14px;color:rgba(255,255,255,.6);margin-bottom:10px;">Focus Areas:</div>
-                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-                    <div class="focus-area" style="padding:8px;background:rgba(255,255,255,.05);border-radius:8px;text-align:center;font-size:12px;"><div style="font-weight:600;color:#E91E63;">Body</div><div style="color:rgba(255,255,255,.6);margin-top:5px;">Prepare Goals</div></div>
-                    <div class="focus-area" style="padding:8px;background:rgba(255,255,255,.05);border-radius:8px;text-align:center;font-size:12px;"><div style="font-weight:600;color:#E91E63;">Being</div><div style="color:rgba(255,255,255,.6);margin-top:5px;">Prepare Goals</div></div>
-                    <div class="focus-area" style="padding:8px;background:rgba(255,255,255,.05);border-radius:8px;text-align:center;font-size:12px;"><div style="font-weight:600;color:#E91E63;">Balance</div><div style="color:rgba(255,255,255,.6);margin-top:5px;">Prepare Goals</div></div>
-                    <div class="focus-area" style="padding:8px;background:rgba(255,255,255,.05);border-radius:8px;text-align:center;font-size:12px;"><div style="font-weight:600;color:#E91E63;">Business</div><div style="color:rgba(255,255,255,.6);margin-top:5px;">Prepare Goals</div></div>
-                </div>
-            </div>
-            <a href="/quarterly_impossible_game/" class="action-button" style="background:linear-gradient(135deg,#E91E63,#F06292);">Plan Next Quarter</a>
-        </div>
-
-        <!-- 8) Personality Assessment -->
-        <div class="stats-card assessment-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-                    </svg>
-                    Personality Assessment
-                </div>
-            </div>
-            <div id="assessmentStatus" style="margin: 20px 0;"><div class="assessment-complete">COMPLETE</div></div>
-            <div class="color-profiles" id="colorProfiles"></div>
-            <div class="kolbe-profile" id="kolbeProfile">Loading...</div>
-            <div id="assessmentDate" style="text-align: center; margin-top: 15px; font-size: 12px; color: rgba(255,255,255,0.5);"></div>
-            <a href="/warrior-voice-assessment/" class="action-button">View Full Assessment</a>
-        </div>
-    </div>
-
-    <!-- Refresh Controls -->
-    <div class="refresh-controls">
-        <div class="last-update" id="lastUpdate">Never updated</div>
-        <button class="refresh-button" id="refreshButton" onclick="refreshDashboard()">
-            <span class="refresh-icon">↻</span>
-            <span>Refresh</span>
-        </button>
-    </div>
+    <button class="refresh-button" id="refreshBtn" onclick="testDashboard()">Test Dashboard</button>
 
     <script>
-        // JavaScript starts here
-        console.log('Script loaded at:', new Date().toISOString());
-        
-        // Configuration
-        const CONFIG = {
-            webhookUrl: 'https://n8n-production-3280.up.railway.app/webhook/dashboard/load-all-stats',
-            TOKEN_KEY: 'coaching_acc_token',
-            USER_KEY: 'coaching_user_data',
-            refreshInterval: 0,
-            retryAttempts: 2,
-            retryDelay: 2000,
-            debugMode: true
-        };
+        console.log('Script starting...');
 
-        console.log('CONFIG loaded:', CONFIG);
-
-        // State management
-        let dashboardData = null;
-        let refreshTimer = null;
-        let retryCount = 0;
-        let currentUser = null;
-        let authToken = null;
-        let lastRefreshTime = null;
-        let isLoading = false;
-
-        // Make sure DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeDashboard);
-        } else {
-            // DOM is already ready
-            initializeDashboard();
+        // Simple test function to verify script is working
+        function testDashboard() {
+            console.log('Test button clicked!');
+            showNotification('Dashboard test triggered!', 'success');
+            loadTestData();
         }
 
-        function initializeDashboard() {
-            console.log('=== Dashboard Initializing ===');
-            console.log('DOM state:', document.readyState);
-            console.log('URL:', window.location.href);
-            
-            
-            // Try to check authentication
-            try {
-                if (!checkAuthentication()) {
-                    console.log('Authentication failed - redirecting to main dashboard');
-                    alert('Please log in through the main Coaching Dashboard first');
-                    window.location.href = 'https://dvries10271.github.io/coaching-dashboard/';
-                    return;
-                }
-                
-                console.log('Authentication successful, loading data...');
-                // Load dashboard data
-                loadDashboardData();
-                
-                // Set up visibility handlers with debouncing
-                setupVisibilityHandlers();
-            } catch (error) {
-                console.error('Initialization error:', error);
-                alert('Error initializing dashboard: ' + error.message);
-            }
-        }
-
-        // Setup visibility handlers with debouncing
-        function setupVisibilityHandlers() {
-            let visibilityTimeout = null;
-            
-            document.addEventListener('visibilitychange', function() {
-                // Clear any pending timeout
-                if (visibilityTimeout) {
-                    clearTimeout(visibilityTimeout);
-                }
-                
-                if (!document.hidden) {
-                    // Debounce the refresh - wait 500ms before loading
-                    visibilityTimeout = setTimeout(() => {
-                        const now = Date.now();
-                        const timeSinceLastRefresh = now - lastRefreshTime;
-                        
-                        // Only refresh if more than 60 seconds have passed and not currently loading
-                        if (timeSinceLastRefresh > 60000 && !isLoading) {
-                            console.log('Refreshing data after returning to page');
-                            loadDashboardData();
-                        }
-                    }, 500);
-                }
-            });
-        }
-
-        // Check authentication
-        function checkAuthentication() {
-            console.log('Checking authentication...');
-            
-            // Check localStorage for authentication data
-            const savedToken = localStorage.getItem(CONFIG.TOKEN_KEY);
-            const savedUser = localStorage.getItem(CONFIG.USER_KEY);
-            const userEmail = localStorage.getItem('coaching_user_email');
-            const userName = localStorage.getItem('coaching_user_name');
-            
-            console.log('Auth check - Token exists:', !!savedToken);
-            console.log('Auth check - Email:', userEmail);
-            console.log('Auth check - User data exists:', !!savedUser);
-            
-            // For testing, allow bypass with no auth (will use mock data)
-            if (!savedToken && !userEmail) {
-                console.warn('No authentication found - will use mock data');
-                // Set dummy user for testing
-                currentUser = {
-                    email: 'test@example.com',
-                    name: 'Test User',
-                    user_id: 'test-user',
-                    profile: {}
-                };
-                authToken = 'test-token';
-                
-                document.getElementById('authStatus').innerHTML = 
-                    `Testing mode: <strong>Not authenticated</strong>`;
-                document.getElementById('authRequired').style.display = 'none';
-                document.querySelector('.stats-grid').style.display = 'grid';
-                
-                return true; // Allow to proceed with mock data
-            }
-            
-            try {
-                authToken = savedToken || 'no-token';
-                
-                if (savedUser) {
-                    currentUser = JSON.parse(savedUser);
-                } else {
-                    currentUser = {
-                        email: userEmail || 'unknown@example.com',
-                        name: userName || 'Unknown User',
-                        user_id: localStorage.getItem('user_id') || userEmail || 'unknown',
-                        profile: {
-                            kolbe: localStorage.getItem('coaching_user_kolbe'),
-                            color: localStorage.getItem('coaching_user_color')
-                        }
-                    };
-                }
-                
-                console.log('Authenticated as:', currentUser.email);
-                
-                document.getElementById('authStatus').innerHTML = 
-                    `Logged in as: <strong>${currentUser.email}</strong> | ` +
-                    `<a href="#" onclick="logout()" style="color: #FF9800;">Logout</a>`;
-                
-                document.getElementById('authRequired').style.display = 'none';
-                document.querySelector('.stats-grid').style.display = 'grid';
-                
-                return true;
-            } catch (error) {
-                console.error('Error parsing authentication data:', error);
-                showAuthRequired();
-                return false;
-            }
-        }
-
-        function showAuthRequired() {
-            document.getElementById('authRequired').style.display = 'block';
-            document.querySelector('.stats-grid').style.display = 'none';
-            document.getElementById('loadingOverlay').classList.add('hidden');
-        }
-
-        function logout() {
-            localStorage.removeItem(CONFIG.TOKEN_KEY);
-            localStorage.removeItem(CONFIG.USER_KEY);
-            localStorage.removeItem('coaching_user_email');
-            localStorage.removeItem('coaching_user_name');
-            localStorage.removeItem('coaching_user_kolbe');
-            localStorage.removeItem('coaching_user_color');
-            
-            window.location.href = 'https://dvries10271.github.io/coaching-dashboard/';
-        }
-
-        // Main data loading function with better debugging
-        async function loadDashboardData() {
-            console.log('=== loadDashboardData called ===');
-            
-            // Prevent multiple simultaneous requests
-            if (isLoading) {
-                console.log('Already loading data, skipping request');
-                return;
-            }
-            
-            isLoading = true;
-            
-            try {
-                console.log('Starting fetch request...');
-                console.log('Webhook URL:', CONFIG.webhookUrl);
-                
-                const userId = currentUser?.user_id || 'test-user';
-                const userEmail = currentUser?.email || 'test@example.com';
-                
-                console.log('Request payload:', {
-                    user_id: userId,
-                    email: userEmail,
-                    token: authToken ? 'TOKEN_EXISTS' : 'NO_TOKEN'
-                });
-                
-                // First, try to load mock data to ensure the UI works
-                console.log('Loading with mock data first to test UI...');
-                const mockData = getMockData();
-                updateDashboard(mockData);
-                hideLoadingOverlay();
-                showNotification('Dashboard loaded with sample data', 'info');
-                
-                // Now try the actual webhook
-                console.log('Attempting to fetch real data from webhook...');
-                
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => {
-                    console.log('Request timeout - aborting');
-                    controller.abort();
-                }, 10000); // 10 second timeout
-                
-                const response = await fetch(CONFIG.webhookUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        email: userEmail
-                    }),
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                console.log('Response received:', response.status, response.statusText);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-                console.log('Real data received:', data);
-                
-                // Update with real data
-                if (Array.isArray(data) && data.length > 0 && data[0].stats) {
-                    dashboardData = data[0];
-                    updateDashboard(dashboardData);
-                    showNotification('Dashboard updated with live data!', 'success');
-                }
-                
-                lastRefreshTime = Date.now();
-
-            } catch (error) {
-                console.error('Error in loadDashboardData:', error.message);
-                console.error('Full error:', error);
-                
-                if (error.name === 'AbortError') {
-                    showNotification('Request timed out - using sample data', 'error');
-                } else {
-                    showNotification(`Connection error - using sample data`, 'error');
-                }
-                
-                // Dashboard is already loaded with mock data, so just log the error
-            } finally {
-                isLoading = false;
-                retryCount = 0;
-            }
-        }
-
-        // Mock data function for testing
-        function getMockData() {
-            return {
-                success: true,
-                timestamp: new Date().toISOString(),
-                stats: {
-                    actionCenter: {
-                        activeCount: 0,
-                        capacityUsed: 0,
-                        capacityMax: 40,
-                        completedThisWeek: 0,
-                        completedToday: 0,
-                        movedToday: 0,
-                        blockedCount: 0,
-                        totalItems: 0
-                    },
-                    assessment: {
-                        status: "Not Started",
-                        lastCompleted: null,
-                        primaryColor: "Unknown",
-                        secondaryColor: "Unknown",
-                        kolbeProfile: "0-0-0-0"
-                    },
-                    stackSessions: {
-                        todayStatus: "Not Started",
-                        streak: 0,
-                        weeklyCount: 0,
-                        totalSessions: 0,
-                        lastSessionType: "None"
-                    },
-                    factMap: {
-                        dueDate: "Unknown",
-                        domainsComplete: 0,
-                        domainsTotal: 4,
-                        status: "Not Started",
-                        month: new Date().toLocaleDateString('en-US', { month: 'long' })
-                    },
-                    quarterly: {
-                        quarter: `Q${Math.ceil((new Date().getMonth() + 1) / 3)}`,
-                        year: new Date().getFullYear(),
-                        daysLeft: 90,
-                        progress: 0,
-                        status: "Not Started",
-                        goal: "Not Set"
-                    },
-                    nextQuarter: {
-                        quarter: `Q${Math.ceil((new Date().getMonth() + 1) / 3) % 4 + 1}`,
-                        year: new Date().getFullYear(),
-                        startsInDays: 90,
-                        startDate: "Unknown",
-                        focusAreas: [],
-                        status: "Not Planned",
-                        goals: "Not Set"
-                    }
-                },
-                insights: {
-                    overallHealth: 0,
-                    suggestedFocus: "Connect to database to load your data",
-                    weeklyTrend: "unknown",
-                    dataQuality: {
-                        ideas: 0,
-                        sessions: 0,
-                        profiles: 0,
-                        factMaps: 0,
-                        quarterlyMaps: 0
-                    }
-                }
-            };
-        }
-
-        // Update all dashboard elements - FIXED
-        function updateDashboard(data) {
-            if (!data || !data.stats) {
-                console.error('Invalid data structure');
-                return;
-            }
-
-            const stats = data.stats;
-            const insights = data.insights;
-
-            console.log('Updating dashboard with:', stats);
-
-            // Update all cards with the correct data
-            updateTodaysFocus(stats);
-            updateActionCenter(stats.actionCenter);
-            updateStackSessions(stats.stackSessions);
-            updateAssessment(stats.assessment);
-            updateFactMap(stats.factMap);
-            updateQuarterly(stats.quarterly);
-            updateNextQuarter(stats);
-            updateHealthOverview(insights);
-            updateLastRefreshTime();
-        }
-
-        // Today's Focus Update
-        function updateTodaysFocus(stats) {
-            const today = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('todayDate').textContent = today.toLocaleDateString('en-US', options);
-            
-            const stackStatus = stats.stackSessions?.todayStatus || 'Not Started';
-            const stackEl = document.getElementById('todayStackStatus');
-            stackEl.textContent = stackStatus;
-            stackEl.style.color = stackStatus === 'Completed' ? '#4CAF50' : '#FF9800';
-            
-            const reminder = document.getElementById('todayReminder');
-            if (stackStatus === 'Not Started') {
-                reminder.style.display = 'block';
-                reminder.textContent = '⏰ Remember to complete your daily Stack Session';
-            } else {
-                reminder.style.display = 'none';
-            }
-            
-            document.getElementById('actionsMovedToday').textContent = 
-                (stats.actionCenter?.movedToday || 0) + ' actions';
-            document.getElementById('tasksCompletedToday').textContent = 
-                (stats.actionCenter?.completedToday || 0) + ' tasks';
-        }
-
-        // Next Quarter Update - FIXED
-        function updateNextQuarter(allStats = {}) {
-            const nQ = allStats.nextQuarter || {};
-            
-            let quarter = nQ.quarter || 'Q4';
-            let year = nQ.year || 2025;
-            
-            document.getElementById('nextQuarterDisplay').textContent = `${quarter} ${year}`;
-            
-            let daysLeft = nQ.startsInDays || 0;
-            const daysEl = document.getElementById('daysUntilNext');
-            daysEl.textContent = daysLeft;
-            daysEl.style.color = daysLeft <= 14 ? '#FF5722' : daysLeft <= 30 ? '#FF9800' : '#E91E63';
-            
-            const status = (nQ.status || 'Not Planned').toLowerCase();
-            const goalText = nQ.goals || 'Not Set';
-            
-            const badgeEl = document.getElementById('quarterStatusBadge');
-            badgeEl.textContent = status.replace(/-/g, ' ').toUpperCase();
-            badgeEl.className = 'badge ' + (
-                status.includes('done') ? 'done' :
-                status.includes('progress') ? 'in-progress' : 'pending'
-            );
-            
-            document.getElementById('quarterGoalText').textContent = goalText;
-        }
-
-        // Action Center Update
-        function updateActionCenter(data) {
-            if (!data) return;
-            
-            document.getElementById('activeTasks').textContent = data.activeCount || 0;
-            
-            const capacityPercent = Math.min((data.capacityUsed / data.capacityMax) * 100, 200);
-            const capacityBar = document.getElementById('capacityBar');
-            capacityBar.style.width = `${Math.min(capacityPercent, 100)}%`;
-            
-            capacityBar.className = 'capacity-bar';
-            if (capacityPercent <= 50) {
-                capacityBar.classList.add('green');
-            } else if (capacityPercent <= 100) {
-                capacityBar.classList.add('yellow');
-            } else {
-                capacityBar.classList.add('red');
-            }
-            
-            document.getElementById('capacityText').textContent = 
-                `${data.capacityUsed} / ${data.capacityMax} capacity points`;
-            
-            const warning = document.getElementById('capacityWarning');
-            if (data.capacityUsed > data.capacityMax) {
-                warning.classList.add('show');
-            } else {
-                warning.classList.remove('show');
-            }
-            
-            document.getElementById('weeklyComplete').textContent = 
-                `${data.completedThisWeek || 0} completed this week`;
-            document.getElementById('totalItems').textContent = 
-                `Total: ${data.totalItems || 0}`;
-        }
-
-        // Stack Sessions Update
-        function updateStackSessions(data) {
-            if (!data) return;
-            
-            const statusEl = document.getElementById('sessionStatus');
-            statusEl.textContent = `Today: ${data.todayStatus || 'Not Started'}`;
-            statusEl.className = 'session-status';
-            const statusClass = (data.todayStatus || '').toLowerCase().replace(' ', '-');
-            statusEl.classList.add(statusClass);
-            
-            document.getElementById('streakCount').textContent = data.streak || 0;
-            const fireEmoji = document.getElementById('fireEmoji');
-            fireEmoji.style.display = (data.streak >= 3) ? 'inline-block' : 'none';
-            
-            const weeklyBar = document.getElementById('weeklyBar');
-            const today = new Date().getDay();
-            const mondayOffset = today === 0 ? 6 : today - 1;
-            
-            weeklyBar.innerHTML = '';
-            for (let i = 0; i < 7; i++) {
-                const dayBar = document.createElement('div');
-                dayBar.className = 'day-bar';
-                if (i < data.weeklyCount) {
-                    dayBar.classList.add('completed');
-                }
-                weeklyBar.appendChild(dayBar);
-            }
-            
-            document.getElementById('weeklySessionsText').textContent = 
-                `${data.weeklyCount || 0} / 7 this week`;
-            document.getElementById('totalSessionsText').textContent = 
-                `Total: ${data.totalSessions || 0} sessions`;
-            
-            const startBtn = document.getElementById('startSessionBtn');
-            startBtn.style.display = data.todayStatus === 'Not Started' ? 'inline-block' : 'none';
-        }
-
-        // Assessment Update
-        function updateAssessment(data) {
-            if (!data) return;
-            
-            const profilesDiv = document.getElementById('colorProfiles');
-            profilesDiv.innerHTML = '';
-            
-            if (data.primaryColor) {
-                const primary = document.createElement('div');
-                primary.className = `color-badge color-${data.primaryColor.toLowerCase()}`;
-                primary.textContent = data.primaryColor;
-                profilesDiv.appendChild(primary);
-            }
-            
-            if (data.secondaryColor) {
-                const secondary = document.createElement('div');
-                secondary.className = `color-badge color-${data.secondaryColor.toLowerCase()}`;
-                secondary.textContent = data.secondaryColor;
-                profilesDiv.appendChild(secondary);
-            }
-            
-            if (data.kolbeProfile) {
-                document.getElementById('kolbeProfile').textContent = `Kolbe: ${data.kolbeProfile}`;
-            }
-            
-            if (data.lastCompleted) {
-                const date = new Date(data.lastCompleted);
-                document.getElementById('assessmentDate').textContent = 
-                    `Completed: ${date.toLocaleDateString()}`;
-            }
-        }
-
-        // Fact Map Update
-        function updateFactMap(data) {
-            if (!data) return;
-            
-            document.getElementById('monthDisplay').textContent = data.month || 'Current Month';
-            
-            const domains = ['body', 'being', 'balance', 'business'];
-            domains.forEach((domain, index) => {
-                const domainEl = document.querySelector(`[data-domain="${domain}"]`);
-                if (domainEl) {
-                    if (index < data.domainsComplete) {
-                        domainEl.classList.add('complete');
-                        domainEl.querySelector('.domain-status').textContent = 'Complete';
-                    } else {
-                        domainEl.classList.remove('complete');
-                        domainEl.querySelector('.domain-status').textContent = 'Pending';
-                    }
-                }
-            });
-            
-            document.getElementById('factMapProgress').textContent = 
-                `${data.domainsComplete || 0} / ${data.domainsTotal || 4} Complete`;
-            document.getElementById('factMapDue').textContent = `Due: ${data.dueDate || 'Unknown'}`;
-        }
-
-        // Quarterly Update
-        function updateQuarterly(data) {
-            if (!data) return;
-            
-            document.getElementById('quarterDisplay').textContent = 
-                `${data.quarter} ${data.year}`;
-            document.getElementById('daysNumber').textContent = data.daysLeft || 0;
-            
-            const urgentBadge = document.getElementById('urgentBadge');
-            urgentBadge.style.display = (data.daysLeft <= 7) ? 'inline-block' : 'none';
-            
-            document.getElementById('progressPercent').textContent = data.progress || 0;
-            
-            const goalText = data.goal || data.status || 'Not Set';
-            document.getElementById('quarterlyGoal').textContent = `Goal: ${goalText}`;
-        }
-
-        // Health Overview Update - FIXED
-        function updateHealthOverview(insights) {
-            if (!insights) return;
-            
-            const healthPercent = insights.overallHealth || 0;
-            const healthPercentEl = document.getElementById('healthPercent');
-            healthPercentEl.textContent = `${healthPercent}%`;
-            
-            if (healthPercent >= 70) {
-                healthPercentEl.style.color = '#4CAF50';
-            } else if (healthPercent >= 40) {
-                healthPercentEl.style.color = '#FFC107';
-            } else {
-                healthPercentEl.style.color = '#FF5722';
-            }
-            
-            const healthBar = document.getElementById('healthBarFill');
-            if (healthBar) {
-                healthBar.style.width = `${healthPercent}%`;
-                if (healthPercent >= 70) {
-                    healthBar.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)';
-                } else if (healthPercent >= 40) {
-                    healthBar.style.background = 'linear-gradient(90deg, #FFC107, #FFB74D)';
-                } else {
-                    healthBar.style.background = 'linear-gradient(90deg, #FF5722, #E91E63)';
-                }
-            }
-            
-            document.getElementById('suggestedFocus').textContent = 
-                insights.suggestedFocus || 'Keep up the great work!';
-            
-            const trendEl = document.getElementById('trendIndicator');
-            const trend = insights.weeklyTrend || 'stable';
-            trendEl.textContent = `📊 ${trend}`;
-            trendEl.className = `trend-indicator trend-${trend.replace(' ', '-')}`;
-        }
-
-        // Refresh dashboard
-        function refreshDashboard() {
-            const button = document.getElementById('refreshButton');
-            button.disabled = true;
-            button.classList.add('loading');
-            
-            console.log('Manual refresh triggered');
-            
-            loadDashboardData().finally(() => {
-                button.disabled = false;
-                button.classList.remove('loading');
-            });
-        }
-
-        // Error handling - reduce retry attempts to avoid spam
-        function handleLoadError(error) {
-            retryCount++;
-            
-            if (retryCount <= 2) { // Reduced from 3 to 2 retries
-                console.log(`Retrying... (${retryCount}/2)`);
-                setTimeout(() => {
-                    loadDashboardData();
-                }, CONFIG.retryDelay * retryCount);
-            } else {
-                // If all retries fail, load mock data so the dashboard is still functional
-                console.log('All retries failed, loading mock data');
-                dashboardData = getMockData();
-                updateDashboard(dashboardData);
-                hideLoadingOverlay();
-                showNotification('Unable to connect to server. Showing sample data.', 'error');
-                retryCount = 0; // Reset for next attempt
-            }
-        }
-
-        // Update last refresh time
-        function updateLastRefreshTime() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-            document.getElementById('lastUpdate').textContent = `Last updated: ${timeString}`;
-        }
-
-        // Show/hide loading overlay
-        function hideLoadingOverlay() {
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.classList.add('hidden');
-        }
-
-        // Notification system
+        // Show notification
         function showNotification(message, type = 'info') {
+            console.log('Notification:', message);
+            
             const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
+            notification.className = 'notification notification-' + type;
             notification.textContent = message;
             document.body.appendChild(notification);
             
-            setTimeout(() => {
+            setTimeout(function() {
                 notification.classList.add('show');
             }, 100);
             
-            setTimeout(() => {
+            setTimeout(function() {
                 notification.classList.remove('show');
-                setTimeout(() => {
+                setTimeout(function() {
                     notification.remove();
                 }, 400);
             }, 3000);
         }
+
+        // Load test data
+        function loadTestData() {
+            console.log('Loading test data...');
+            
+            const testData = {
+                activeeTasks: 48,
+                completedToday: 0,
+                stackStreak: 0,
+                healthScore: 25,
+                quarter: 'Q3 2025',
+                daysLeft: 5
+            };
+            
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = '';
+            
+            // Create test cards
+            const cards = [
+                { title: 'Active Tasks', value: testData.activeTasks, subtitle: 'Tasks in progress' },
+                { title: 'Stack Streak', value: testData.stackStreak, subtitle: 'Days in a row' },
+                { title: 'Health Score', value: testData.healthScore + '%', subtitle: 'Overall system health' },
+                { title: 'Current Quarter', value: testData.quarter, subtitle: testData.daysLeft + ' days remaining' }
+            ];
+            
+            cards.forEach(function(card) {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'stats-card';
+                cardElement.innerHTML = 
+                    '<div class="card-title">' + card.title + '</div>' +
+                    '<div class="card-value">' + card.value + '</div>' +
+                    '<div class="card-subtitle">' + card.subtitle + '</div>';
+                grid.appendChild(cardElement);
+            });
+            
+            // Hide loading overlay
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.add('hidden');
+            
+            console.log('Test data loaded successfully!');
+            showNotification('Dashboard loaded with test data', 'success');
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing dashboard...');
+            
+            // Check for auth
+            const userEmail = localStorage.getItem('coaching_user_email');
+            const authStatus = document.getElementById('authStatus');
+            
+            if (userEmail) {
+                authStatus.textContent = 'Logged in as: ' + userEmail;
+                console.log('User authenticated:', userEmail);
+            } else {
+                authStatus.textContent = 'Not authenticated - using test mode';
+                console.log('No authentication found - test mode');
+            }
+            
+            // Load test data automatically
+            setTimeout(function() {
+                loadTestData();
+            }, 1000);
+        });
+
+        // Test webhook connection
+        async function testWebhook() {
+            console.log('Testing webhook connection...');
+            const url = 'https://n8n-production-3280.up.railway.app/webhook/dashboard/load-all-stats';
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: 'test',
+                        email: 'test@example.com'
+                    })
+                });
+                
+                console.log('Webhook response:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Webhook data:', data);
+                    showNotification('Webhook connected successfully!', 'success');
+                } else {
+                    console.error('Webhook error:', response.status);
+                    showNotification('Webhook error: ' + response.status, 'error');
+                }
+            } catch (error) {
+                console.error('Webhook connection failed:', error);
+                showNotification('Cannot connect to webhook', 'error');
+            }
+        }
+
+        console.log('Script loaded successfully!');
+    </script>
+</body>
+</html>
