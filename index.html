@@ -314,16 +314,16 @@
                         const userData = JSON.parse(savedUser);
                         currentUser = {
                             email: userData.email || userEmail,
-                            user_id: userData.id || userData.user_id || userData._id || userEmail.split('@')[0],
-                            name: userData.name || userData.fullName || 'User',
-                            profile: userData.profile || {}
+                            user_id: userData.id, // The field is 'id' not 'user_id'
+                            name: userData.name || 'User',
+                            role: userData.role || 'user'
                         };
                         console.log('Loaded user from main dashboard:', currentUser);
                     } else {
                         // Fallback to email-based user
                         currentUser = {
                             email: userEmail,
-                            user_id: userEmail.split('@')[0], // Use email prefix as fallback
+                            user_id: 'recCGzIEkfvEk92sY', // Hardcoded fallback for now
                             name: localStorage.getItem('coaching_user_name') || 'User'
                         };
                         console.log('Created user from email:', currentUser);
@@ -331,7 +331,7 @@
                     
                     authStatus.textContent = 'Logged in as: ' + currentUser.email;
                     console.log('User authenticated:', currentUser.email);
-                    console.log('User ID:', currentUser.user_id);
+                    console.log('User ID (Airtable):', currentUser.user_id);
                     
                 } catch (error) {
                     console.error('Error parsing user data:', error);
@@ -376,7 +376,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        user_id: currentUser?.user_id || 'dannydevries',  // Use proper ID, not email
+                        user_id: currentUser?.user_id || 'recCGzIEkfvEk92sY',  // Use the actual Airtable ID
                         email: currentUser?.email || 'dannydevries@me.com'
                     })
                 });
