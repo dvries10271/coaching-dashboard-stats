@@ -304,14 +304,50 @@
         // Check authentication
         function checkAuthentication() {
             const userEmail = localStorage.getItem('coaching_user_email');
+            const savedUser = localStorage.getItem('coaching_user_data'); // This contains the full user object
             const authStatus = document.getElementById('authStatus');
             
-            if (userEmail) {
-                currentUser = { email: userEmail };
-                authStatus.textContent = 'Logged in as: ' + userEmail;
-                console.log('User authenticated:', userEmail);
+            if (userEmail || savedUser) {
+                try {
+                    // Try to parse the saved user data from main dashboard
+                    if (savedUser) {
+                        const userData = JSON.parse(savedUser);
+                        currentUser = {
+                            email: userData.email || userEmail,
+                            user_id: userData.id || userData.user_id || userData._id || userEmail.split('@')[0],
+                            name: userData.name || userData.fullName || 'User',
+                            profile: userData.profile || {}
+                        };
+                        console.log('Loaded user from main dashboard:', currentUser);
+                    } else {
+                        // Fallback to email-based user
+                        currentUser = {
+                            email: userEmail,
+                            user_id: userEmail.split('@')[0], // Use email prefix as fallback
+                            name: localStorage.getItem('coaching_user_name') || 'User'
+                        };
+                        console.log('Created user from email:', currentUser);
+                    }
+                    
+                    authStatus.textContent = 'Logged in as: ' + currentUser.email;
+                    console.log('User authenticated:', currentUser.email);
+                    console.log('User ID:', currentUser.user_id);
+                    
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    // Fallback to test mode
+                    currentUser = {
+                        email: 'test@example.com',
+                        user_id: 'test'
+                    };
+                    authStatus.textContent = 'Test Mode - Parse error';
+                }
             } else {
-                currentUser = { email: 'test@example.com' };
+                // No auth at all - use test mode
+                currentUser = {
+                    email: 'test@example.com',
+                    user_id: 'test'
+                };
                 authStatus.textContent = 'Test Mode - Not authenticated';
                 console.log('No authentication - using test mode');
             }
@@ -331,6 +367,8 @@
             
             try {
                 console.log('Fetching dashboard data...');
+                console.log('Sending user_id:', currentUser?.user_id);
+                console.log('Sending email:', currentUser?.email);
                 
                 const response = await fetch(CONFIG.webhookUrl, {
                     method: 'POST',
@@ -338,8 +376,8 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        user_id: currentUser?.email || 'test',
-                        email: currentUser?.email || 'test@example.com'
+                        user_id: currentUser?.user_id || 'dannydevries',  // Use proper ID, not email
+                        email: currentUser?.email || 'dannydevries@me.com'
                     })
                 });
                 
