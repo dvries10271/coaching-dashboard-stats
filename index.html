@@ -304,26 +304,24 @@
         // Check authentication
         function checkAuthentication() {
             const userEmail = localStorage.getItem('coaching_user_email');
-            const savedUser = localStorage.getItem('coaching_user_data'); // This contains the full user object
+            const savedUser = localStorage.getItem('coaching_user_data');
             const authStatus = document.getElementById('authStatus');
             
             if (userEmail || savedUser) {
                 try {
-                    // Try to parse the saved user data from main dashboard
                     if (savedUser) {
                         const userData = JSON.parse(savedUser);
                         currentUser = {
                             email: userData.email || userEmail,
-                            user_id: userData.id, // The field is 'id' not 'user_id'
+                            user_id: userData.id,
                             name: userData.name || 'User',
                             role: userData.role || 'user'
                         };
                         console.log('Loaded user from main dashboard:', currentUser);
                     } else {
-                        // Fallback to email-based user
                         currentUser = {
                             email: userEmail,
-                            user_id: 'recCGzIEkfvEk92sY', // Hardcoded fallback for now
+                            user_id: 'recCGzIEkfvEk92sY',
                             name: localStorage.getItem('coaching_user_name') || 'User'
                         };
                         console.log('Created user from email:', currentUser);
@@ -335,7 +333,6 @@
                     
                 } catch (error) {
                     console.error('Error parsing user data:', error);
-                    // Fallback to test mode
                     currentUser = {
                         email: 'test@example.com',
                         user_id: 'test'
@@ -343,7 +340,6 @@
                     authStatus.textContent = 'Test Mode - Parse error';
                 }
             } else {
-                // No auth at all - use test mode
                 currentUser = {
                     email: 'test@example.com',
                     user_id: 'test'
@@ -366,7 +362,6 @@
             refreshBtn.textContent = 'Loading...';
             
             try {
-                // Get user's timezone
                 const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 
                 console.log('Fetching dashboard data...');
@@ -382,9 +377,9 @@
                     body: JSON.stringify({
                         user_id: currentUser?.user_id || 'recCGzIEkfvEk92sY',
                         email: currentUser?.email || 'dannydevries@me.com',
-                        timezone: userTimezone,  // Add timezone to request
-                        localTime: new Date().toISOString(),  // Also send local time for reference
-                        utcOffset: new Date().getTimezoneOffset()  // Minutes offset from UTC
+                        timezone: userTimezone,
+                        localTime: new Date().toISOString(),
+                        utcOffset: new Date().getTimezoneOffset()
                     })
                 });
                 
@@ -424,7 +419,6 @@
             } catch (error) {
                 console.error('Error loading data:', error);
                 
-                // If rate limited or error, use sample data
                 if (error.message.includes('Rate limited')) {
                     showNotification('Rate limited - showing sample data. Retry in 30s', 'error');
                     setTimeout(loadDashboardData, CONFIG.retryDelay);
@@ -432,7 +426,6 @@
                     showNotification('Using sample data - ' + error.message, 'info');
                 }
                 
-                // Load sample data as fallback
                 const sampleData = getSampleData();
                 renderDashboard(sampleData);
                 hideLoadingOverlay();
@@ -595,60 +588,6 @@
             return card;
         }
 
-        function createNextQuarterCard(data) {
-            const card = document.createElement('div');
-            card.className = 'stats-card next-quarter-card';
-            card.style.setProperty('--card-color', '#E91E63');
-            card.style.setProperty('--card-color-light', '#F06292');
-            
-            card.innerHTML = `
-                <div class="card-header">
-                    <div class="card-title">Next Quarter Planning</div>
-                </div>
-                <div style="text-align: center; margin-top: 10px;">
-                    <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; text-transform: uppercase; background: #9E9E9E; color: white;">
-                        ${data.status || 'Not Planned'}
-                    </span>
-                </div>
-                <div style="text-align: center; font-size: 36px; font-weight: bold; color: #E91E63; margin: 20px 0;">
-                    ${data.quarter} ${data.year}
-                </div>
-                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 15px 0;">
-                    <div style="font-size: 14px; color: rgba(255,255,255,0.6);">Starts in</div>
-                    <div style="font-size: 48px; font-weight: bold; color: ${data.startsInDays <= 14 ? '#FF5722' : data.startsInDays <= 30 ? '#FF9800' : '#E91E63'};">
-                        ${data.startsInDays}
-                    </div>
-                    <div style="font-size: 14px; color: rgba(255,255,255,0.6);">Days</div>
-                </div>
-                <div style="margin-top: 20px;">
-                    <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 10px;">Focus Areas:</div>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                        <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
-                            <div style="font-weight: 600; color: #E91E63;">Body</div>
-                            <div style="color: rgba(255,255,255,0.6); margin-top: 5px; font-size: 12px;">Prepare Goals</div>
-                        </div>
-                        <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
-                            <div style="font-weight: 600; color: #E91E63;">Being</div>
-                            <div style="color: rgba(255,255,255,0.6); margin-top: 5px; font-size: 12px;">Prepare Goals</div>
-                        </div>
-                        <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
-                            <div style="font-weight: 600; color: #E91E63;">Balance</div>
-                            <div style="color: rgba(255,255,255,0.6); margin-top: 5px; font-size: 12px;">Prepare Goals</div>
-                        </div>
-                        <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
-                            <div style="font-weight: 600; color: #E91E63;">Business</div>
-                            <div style="color: rgba(255,255,255,0.6); margin-top: 5px; font-size: 12px;">Prepare Goals</div>
-                        </div>
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 20px; font-size: 14px; color: rgba(255,255,255,0.6);">
-                    Goals: ${data.goals || 'Not Set'}
-                </div>
-            `;
-            
-            return card;
-        }
-
         function createAssessmentCard(data) {
             const card = document.createElement('div');
             card.className = 'stats-card assessment-card';
@@ -710,82 +649,189 @@
             return card;
         }
 
-        function createNextQuarterCardWithDetails(data) {
-    const card = document.createElement('div');
-    card.className = 'stats-card quarterly-card';
-    
-    const statusClass = data.status === 'Planned' ? 'color-badge' : '';
-    const statusColor = data.status === 'Planned' ? 'background: linear-gradient(135deg, #4CAF50, #8BC34A);' : 'background: rgba(255, 255, 255, 0.1);';
-    
-    card.innerHTML = `
-        <div class="card-header">
-            <div class="card-title">Next Quarter Planning</div>
-            <div class="${statusClass}" style="${statusColor} padding: 5px 10px; border-radius: 8px; font-size: 12px;">
-                ${data.status || 'Not Planned'}
-            </div>
-        </div>
-        <div style="text-align: center;">
-            <div style="font-size: 42px; font-weight: bold; color: #00BCD4; margin: 10px 0;">
-                ${data.quarter} ${data.year}
-            </div>
-        </div>
-        <div style="background: rgba(0, 188, 212, 0.1); border-radius: 10px; padding: 15px; margin: 15px 0;">
-            <div style="text-align: center; margin-bottom: 10px;">
-                <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Starts in</div>
-                <div style="font-size: 36px; font-weight: bold; color: #FFB74D;">${data.startsInDays}</div>
-                <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Days</div>
-            </div>
-        </div>
-        <div style="margin-top: 15px;">
-            <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">Focus Areas:</div>
-            <div class="domain-grid">
-                ${(data.focusAreas || []).map((area) => {
-                    const areaLower = area.toLowerCase();
-                    const goals = data.goals && data.goals[areaLower] ? data.goals[areaLower] : [];
-                    const hasGoals = goals.length > 0;
-                    
-                    // Create a tooltip-like display for goals
-                    const goalsTooltip = hasGoals ? `
-                        <div style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); 
-                                    background: rgba(0, 0, 0, 0.9); padding: 10px; border-radius: 8px; 
-                                    min-width: 250px; max-width: 350px; z-index: 1000; margin-bottom: 5px;"
-                             class="goals-tooltip">
-                            <div style="font-weight: 600; margin-bottom: 8px; color: #00BCD4;">${area} Goals:</div>
-                            <ul style="margin: 0; padding-left: 20px; font-size: 12px;">
-                                ${goals.map(goal => `<li style="margin: 4px 0;">${goal}</li>`).join('')}
-                            </ul>
-                        </div>
-                    ` : '';
-                    
-                    return `
-                        <div class="domain-item ${hasGoals ? 'complete' : ''}" 
-                             style="position: relative; cursor: ${hasGoals ? 'pointer' : 'default'};"
-                             ${hasGoals ? `onmouseenter="this.querySelector('.goals-tooltip').style.display='block'" 
-                                          onmouseleave="this.querySelector('.goals-tooltip').style.display='none'"` : ''}>
-                            ${goalsTooltip}
-                            <div style="font-weight: 600; color: ${hasGoals ? '#4CAF50' : '#00BCD4'};">${area}</div>
-                            <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px;">
-                                ${hasGoals ? `${goals.length} goal${goals.length > 1 ? 's' : ''} ⓘ` : 'Prepare Goals'}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        </div>
-        ${data.totalGoals ? `
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <div style="text-align: center;">
-                    <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Total Goals</div>
-                    <div style="font-size: 24px; font-weight: bold; color: #00BCD4;">${data.totalGoals}</div>
+        // FIXED: Create Quarterly Card (Current Quarter)
+        function createQuarterlyCard(data) {
+            const card = document.createElement('div');
+            card.className = 'stats-card quarterly-card';
+            card.style.setProperty('--card-color', '#00BCD4');
+            card.style.setProperty('--card-color-light', '#26C6DA');
+            
+            const urgencyClass = data.daysLeft <= 7 ? 'color-badge color-red' : '';
+            const urgencyStyle = data.daysLeft <= 7 ? 'background: linear-gradient(135deg, #F44336, #E91E63);' : 'background: rgba(255, 255, 255, 0.1);';
+            
+            // Check if missions exist and are properly structured
+            const hasMissions = data.missions && typeof data.missions === 'object' && 
+                              (data.missions.body || data.missions.being || data.missions.balance || data.missions.business);
+            const focusAreas = data.focusAreas || ['Body', 'Being', 'Balance', 'Business'];
+            
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-title">Quarterly Impossible Game</div>
+                    ${data.daysLeft <= 7 ? `<div class="${urgencyClass}" style="${urgencyStyle} padding: 5px 10px; border-radius: 8px; font-size: 12px;">URGENT</div>` : ''}
                 </div>
-            </div>
-        ` : ''}
-    `;
-    
-    return card;
-}
+                <div style="text-align: center;">
+                    <div style="font-size: 42px; font-weight: bold; color: #00BCD4; margin: 10px 0;">
+                        ${data.quarter} ${data.year}
+                    </div>
+                </div>
+                <div style="background: rgba(0, 188, 212, 0.1); border-radius: 10px; padding: 15px; margin: 15px 0;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 36px; font-weight: bold; color: ${data.daysLeft <= 7 ? '#FF5722' : '#FFB74D'};">
+                            ${data.daysLeft}
+                        </div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Days Remaining</div>
+                    </div>
+                </div>
+                <div style="margin: 15px 0;">
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 5px;">Progress</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${data.progress >= 75 ? 'green' : data.progress >= 50 ? 'yellow' : 'red'}" 
+                             style="width: ${data.progress || 0}%"></div>
+                    </div>
+                    <div style="text-align: center; font-size: 24px; font-weight: bold; margin-top: 10px;">
+                        ${data.progress || 0}%
+                    </div>
+                </div>
+                ${hasMissions ? `
+                    <div style="margin-top: 20px;">
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">Missions:</div>
+                        <div class="domain-grid">
+                            ${focusAreas.map((area) => {
+                                const areaLower = area.toLowerCase();
+                                const missions = data.missions && typeof data.missions === 'object' && data.missions[areaLower] ? data.missions[areaLower] : [];
+                                const hasMissions = Array.isArray(missions) && missions.length > 0;
+                                
+                                // Create expandable/hoverable missions display
+                                const missionsTooltip = hasMissions ? `
+                                    <div style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); 
+                                                background: rgba(20, 20, 30, 0.98); border: 1px solid rgba(0, 188, 212, 0.3);
+                                                padding: 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                                                min-width: 280px; max-width: 400px; z-index: 1000; margin-bottom: 8px;"
+                                         class="missions-tooltip">
+                                        <div style="font-weight: 600; margin-bottom: 8px; color: #00BCD4;">${area} Missions:</div>
+                                        <ul style="margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.6;">
+                                            ${missions.map(mission => `<li style="margin: 4px 0; color: rgba(255,255,255,0.9);">${mission}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : '';
+                                
+                                return `
+                                    <div class="domain-item ${hasMissions ? 'complete' : ''}" 
+                                         style="position: relative; cursor: ${hasMissions ? 'pointer' : 'default'}; 
+                                                background: ${hasMissions ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 255, 255, 0.05)'};
+                                                border: 2px solid ${hasMissions ? '#4CAF50' : 'transparent'};"
+                                         ${hasMissions ? `onmouseenter="this.querySelector('.missions-tooltip').style.display='block'" 
+                                                      onmouseleave="this.querySelector('.missions-tooltip').style.display='none'"` : ''}>
+                                        ${missionsTooltip}
+                                        <div style="font-weight: 600; color: ${hasMissions ? '#4CAF50' : '#00BCD4'}; font-size: 14px;">${area}</div>
+                                        <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 4px;">
+                                            ${hasMissions ? `${missions.length} mission${missions.length > 1 ? 's' : ''} ⓘ` : 'No missions'}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                ${data.totalMissions ? `
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Total Missions</div>
+                            <div style="font-size: 28px; font-weight: bold; color: #00BCD4;">${data.totalMissions}</div>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+            
+            return card;
+        }
 
-        // Get sample data (matching the structure you provided)
+        // FIXED: Create Next Quarter Card with proper missions handling
+        function createNextQuarterCard(data) {
+            const card = document.createElement('div');
+            card.className = 'stats-card quarterly-card';
+            card.style.setProperty('--card-color', '#E91E63');
+            card.style.setProperty('--card-color-light', '#EC407A');
+            
+            const statusClass = data.status === 'Planned' ? 'color-badge' : '';
+            const statusColor = data.status === 'Planned' ? 'background: linear-gradient(135deg, #4CAF50, #8BC34A);' : 'background: rgba(255, 255, 255, 0.1);';
+            
+            // Support both "goals" and "missions" field names
+            const missions = data.missions || data.goals;
+            const totalMissions = data.totalMissions || data.totalGoals;
+            
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-title">Next Quarter Planning</div>
+                    <div class="${statusClass}" style="${statusColor} padding: 5px 10px; border-radius: 8px; font-size: 12px;">
+                        ${data.status || 'Not Planned'}
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 42px; font-weight: bold; color: #E91E63; margin: 10px 0;">
+                        ${data.quarter} ${data.year}
+                    </div>
+                </div>
+                <div style="background: rgba(233, 30, 99, 0.1); border-radius: 10px; padding: 15px; margin: 15px 0;">
+                    <div style="text-align: center; margin-bottom: 10px;">
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Starts in</div>
+                        <div style="font-size: 36px; font-weight: bold; color: #FF5722;">${data.startsInDays}</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Days</div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">Focus Areas:</div>
+                    <div class="domain-grid">
+                        ${(data.focusAreas || ['Body', 'Being', 'Balance', 'Business']).map((area) => {
+                            const areaLower = area.toLowerCase();
+                            const areaMissions = missions && typeof missions === 'object' && missions[areaLower] ? missions[areaLower] : [];
+                            const hasMissions = Array.isArray(areaMissions) && areaMissions.length > 0;
+                            
+                            // Create expandable/hoverable missions display
+                            const missionsTooltip = hasMissions ? `
+                                <div style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); 
+                                            background: rgba(20, 20, 30, 0.98); border: 1px solid rgba(233, 30, 99, 0.3);
+                                            padding: 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                                            min-width: 280px; max-width: 400px; z-index: 1000; margin-bottom: 8px;"
+                                     class="missions-tooltip">
+                                    <div style="font-weight: 600; margin-bottom: 8px; color: #E91E63;">${area} Missions:</div>
+                                    <ul style="margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.6;">
+                                        ${areaMissions.map(mission => `<li style="margin: 4px 0; color: rgba(255,255,255,0.9);">${mission}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : '';
+                            
+                            return `
+                                <div class="domain-item ${hasMissions ? 'complete' : ''}" 
+                                     style="position: relative; cursor: ${hasMissions ? 'pointer' : 'default'}; 
+                                            background: ${hasMissions ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 255, 255, 0.05)'};
+                                            border: 2px solid ${hasMissions ? '#4CAF50' : 'transparent'};"
+                                     ${hasMissions ? `onmouseenter="this.querySelector('.missions-tooltip').style.display='block'" 
+                                                  onmouseleave="this.querySelector('.missions-tooltip').style.display='none'"` : ''}>
+                                    ${missionsTooltip}
+                                    <div style="font-weight: 600; color: ${hasMissions ? '#4CAF50' : '#E91E63'}; font-size: 14px;">${area}</div>
+                                    <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 4px;">
+                                        ${hasMissions ? `${areaMissions.length} mission${areaMissions.length > 1 ? 's' : ''} ⓘ` : 'Prepare Missions'}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                ${totalMissions ? `
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Total Missions Set</div>
+                            <div style="font-size: 28px; font-weight: bold; color: #E91E63;">${totalMissions}</div>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+            
+            return card;
+        }
+
+        // Get sample data
         function getSampleData() {
             return {
                 "success": true,
@@ -835,9 +881,15 @@
                         "year": 2025,
                         "startsInDays": 6,
                         "startDate": "Oct 1",
-                        "focusAreas": [],
+                        "focusAreas": ["Body", "Being", "Balance", "Business"],
                         "status": "Not Planned",
-                        "goals": "Not Set"
+                        "goals": {
+                            "body": ["Sample goal 1", "Sample goal 2"],
+                            "being": ["Sample goal 1", "Sample goal 2"],
+                            "balance": ["Sample goal 1", "Sample goal 2"],
+                            "business": ["Sample goal 1", "Sample goal 2"]
+                        },
+                        "totalGoals": 8
                     }
                 },
                 "insights": {
