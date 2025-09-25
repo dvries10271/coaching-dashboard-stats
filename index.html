@@ -710,36 +710,80 @@
             return card;
         }
 
-        function createQuarterlyCard(data) {
-            const card = document.createElement('div');
-            card.className = 'stats-card quarterly-card';
-            
-            const urgentColor = data.daysLeft <= 7 ? '#FF5722' : '#FF9800';
-            
-            card.innerHTML = `
-                <div class="card-header">
-                    <div class="card-title">Quarterly Impossible Game</div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-size: 36px; font-weight: bold; color: #00BCD4; margin: 20px 0;">
-                        ${data.quarter} ${data.year}
-                    </div>
-                    <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                        <div style="font-size: 48px; font-weight: bold; color: ${urgentColor};">
-                            ${data.daysLeft}
+        function createNextQuarterCardWithDetails(data) {
+    const card = document.createElement('div');
+    card.className = 'stats-card quarterly-card';
+    
+    const statusClass = data.status === 'Planned' ? 'color-badge' : '';
+    const statusColor = data.status === 'Planned' ? 'background: linear-gradient(135deg, #4CAF50, #8BC34A);' : 'background: rgba(255, 255, 255, 0.1);';
+    
+    card.innerHTML = `
+        <div class="card-header">
+            <div class="card-title">Next Quarter Planning</div>
+            <div class="${statusClass}" style="${statusColor} padding: 5px 10px; border-radius: 8px; font-size: 12px;">
+                ${data.status || 'Not Planned'}
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 42px; font-weight: bold; color: #00BCD4; margin: 10px 0;">
+                ${data.quarter} ${data.year}
+            </div>
+        </div>
+        <div style="background: rgba(0, 188, 212, 0.1); border-radius: 10px; padding: 15px; margin: 15px 0;">
+            <div style="text-align: center; margin-bottom: 10px;">
+                <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Starts in</div>
+                <div style="font-size: 36px; font-weight: bold; color: #FFB74D;">${data.startsInDays}</div>
+                <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Days</div>
+            </div>
+        </div>
+        <div style="margin-top: 15px;">
+            <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">Focus Areas:</div>
+            <div class="domain-grid">
+                ${(data.focusAreas || []).map((area) => {
+                    const areaLower = area.toLowerCase();
+                    const goals = data.goals && data.goals[areaLower] ? data.goals[areaLower] : [];
+                    const hasGoals = goals.length > 0;
+                    
+                    // Create a tooltip-like display for goals
+                    const goalsTooltip = hasGoals ? `
+                        <div style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); 
+                                    background: rgba(0, 0, 0, 0.9); padding: 10px; border-radius: 8px; 
+                                    min-width: 250px; max-width: 350px; z-index: 1000; margin-bottom: 5px;"
+                             class="goals-tooltip">
+                            <div style="font-weight: 600; margin-bottom: 8px; color: #00BCD4;">${area} Goals:</div>
+                            <ul style="margin: 0; padding-left: 20px; font-size: 12px;">
+                                ${goals.map(goal => `<li style="margin: 4px 0;">${goal}</li>`).join('')}
+                            </ul>
                         </div>
-                        <div style="font-size: 14px; color: rgba(255,255,255,0.6);">Days Remaining</div>
-                        ${data.daysLeft <= 7 ? '<div style="margin-top: 10px; display: inline-block; background: linear-gradient(135deg, #FF5722, #E91E63); color: white; padding: 5px 10px; border-radius: 15px; font-size: 11px; text-transform: uppercase;">URGENT</div>' : ''}
-                    </div>
-                    <div style="margin-top: 20px;">
-                        <div style="font-size: 14px; color: rgba(255,255,255,0.6);">Progress</div>
-                        <div style="font-size: 36px; font-weight: bold; color: #00BCD4;">${data.progress}%</div>
-                    </div>
+                    ` : '';
+                    
+                    return `
+                        <div class="domain-item ${hasGoals ? 'complete' : ''}" 
+                             style="position: relative; cursor: ${hasGoals ? 'pointer' : 'default'};"
+                             ${hasGoals ? `onmouseenter="this.querySelector('.goals-tooltip').style.display='block'" 
+                                          onmouseleave="this.querySelector('.goals-tooltip').style.display='none'"` : ''}>
+                            ${goalsTooltip}
+                            <div style="font-weight: 600; color: ${hasGoals ? '#4CAF50' : '#00BCD4'};">${area}</div>
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px;">
+                                ${hasGoals ? `${goals.length} goal${goals.length > 1 ? 's' : ''} ⓘ` : 'Prepare Goals'}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+        ${data.totalGoals ? `
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="text-align: center;">
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Total Goals</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #00BCD4;">${data.totalGoals}</div>
                 </div>
-            `;
-            
-            return card;
-        }
+            </div>
+        ` : ''}
+    `;
+    
+    return card;
+}
 
         // Get sample data (matching the structure you provided)
         function getSampleData() {
