@@ -366,9 +366,13 @@
             refreshBtn.textContent = 'Loading...';
             
             try {
+                // Get user's timezone
+                const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                
                 console.log('Fetching dashboard data...');
                 console.log('Sending user_id:', currentUser?.user_id);
                 console.log('Sending email:', currentUser?.email);
+                console.log('User timezone:', userTimezone);
                 
                 const response = await fetch(CONFIG.webhookUrl, {
                     method: 'POST',
@@ -376,8 +380,11 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        user_id: currentUser?.user_id || 'recCGzIEkfvEk92sY',  // Use the actual Airtable ID
-                        email: currentUser?.email || 'dannydevries@me.com'
+                        user_id: currentUser?.user_id || 'recCGzIEkfvEk92sY',
+                        email: currentUser?.email || 'dannydevries@me.com',
+                        timezone: userTimezone,  // Add timezone to request
+                        localTime: new Date().toISOString(),  // Also send local time for reference
+                        utcOffset: new Date().getTimezoneOffset()  // Minutes offset from UTC
                     })
                 });
                 
