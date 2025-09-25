@@ -930,16 +930,20 @@
 
     <!-- JavaScript -->
     <script>
+        console.log('Script loaded at:', new Date().toISOString());
+        
         // Configuration
         const CONFIG = {
             webhookUrl: 'https://n8n-production-3280.up.railway.app/webhook/dashboard/load-all-stats',
             TOKEN_KEY: 'coaching_acc_token',
             USER_KEY: 'coaching_user_data',
             refreshInterval: 0,
-            retryAttempts: 3,
+            retryAttempts: 2,
             retryDelay: 2000,
             debugMode: true
         };
+
+        console.log('CONFIG loaded:', CONFIG);
 
         // State management
         let dashboardData = null;
@@ -948,24 +952,42 @@
         let currentUser = null;
         let authToken = null;
         let lastRefreshTime = null;
-        let isLoading = false; // Prevent multiple simultaneous requests
+        let isLoading = false;
 
-        // Initialize dashboard on load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Dashboard initializing...');
+        // Make sure DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeDashboard);
+        } else {
+            // DOM is already ready
+            initializeDashboard();
+        }
+
+        function initializeDashboard() {
+            console.log('=== Dashboard Initializing ===');
+            console.log('DOM state:', document.readyState);
+            console.log('URL:', window.location.href);
             
-            if (!checkAuthentication()) {
-                alert('Please log in through the main Coaching Dashboard first');
-                window.location.href = 'https://dvries10271.github.io/coaching-dashboard/';
-                return;
+            
+            // Try to check authentication
+            try {
+                if (!checkAuthentication()) {
+                    console.log('Authentication failed - redirecting to main dashboard');
+                    alert('Please log in through the main Coaching Dashboard first');
+                    window.location.href = 'https://dvries10271.github.io/coaching-dashboard/';
+                    return;
+                }
+                
+                console.log('Authentication successful, loading data...');
+                // Load dashboard data
+                loadDashboardData();
+                
+                // Set up visibility handlers with debouncing
+                setupVisibilityHandlers();
+            } catch (error) {
+                console.error('Initialization error:', error);
+                alert('Error initializing dashboard: ' + error.message);
             }
-            
-            // Only load data once on initial load
-            loadDashboardData();
-            
-            // Set up visibility handlers with debouncing
-            setupVisibilityHandlers();
-        });
+        }
 
         // Setup visibility handlers with debouncing
         function setupVisibilityHandlers() {
@@ -991,34 +1013,52 @@
                     }, 500);
                 }
             });
-            
-            // Remove the focus handler to prevent duplicate requests
-            // The visibility change handler is sufficient
         }
 
         // Check authentication
         function checkAuthentication() {
+            console.log('Checking authentication...');
+            
+            // Check localStorage for authentication data
             const savedToken = localStorage.getItem(CONFIG.TOKEN_KEY);
             const savedUser = localStorage.getItem(CONFIG.USER_KEY);
             const userEmail = localStorage.getItem('coaching_user_email');
             const userName = localStorage.getItem('coaching_user_name');
             
+            console.log('Auth check - Token exists:', !!savedToken);
+            console.log('Auth check - Email:', userEmail);
+            console.log('Auth check - User data exists:', !!savedUser);
+            
+            // For testing, allow bypass with no auth (will use mock data)
             if (!savedToken && !userEmail) {
-                console.error('No authentication found');
-                showAuthRequired();
-                return false;
+                console.warn('No authentication found - will use mock data');
+                // Set dummy user for testing
+                currentUser = {
+                    email: 'test@example.com',
+                    name: 'Test User',
+                    user_id: 'test-user',
+                    profile: {}
+                };
+                authToken = 'test-token';
+                
+                document.getElementById('authStatus').innerHTML = 
+                    `Testing mode: <strong>Not authenticated</strong>`;
+                document.getElementById('authRequired').style.display = 'none';
+                document.querySelector('.stats-grid').style.display = 'grid';
+                
+                return true; // Allow to proceed with mock data
             }
             
             try {
-                authToken = savedToken;
+                authToken = savedToken || 'no-token';
                 
                 if (savedUser) {
                     currentUser = JSON.parse(savedUser);
                 } else {
                     currentUser = {
-                        email: userEmail,
-                        name: userName,
-                        user_id: localStorage.getItem('user_id') || userEmail,
+                        email: userEmail || 'unknown@example.com',
+                        name: userName || 'Unknown User',
+                        user_id: localStorage.getItem('user_id') || userEmail || 'unknown',
                         profile: {
                             kolbe: localStorage.getItem('coaching_user_kolbe'),
                             color: localStorage.getItem('coaching_user_color')
@@ -1060,8 +1100,10 @@
             window.location.href = 'https://dvries10271.github.io/coaching-dashboard/';
         }
 
-        // Main data loading function - FIXED with better error handling
+        // Main data loading function with better debugging
         async function loadDashboardData() {
+            console.log('=== loadDashboardData called ===');
+            
             // Prevent multiple simultaneous requests
             if (isLoading) {
                 console.log('Already loading data, skipping request');
@@ -1071,16 +1113,33 @@
             isLoading = true;
             
             try {
-                console.log('Fetching dashboard data...');
+                console.log('Starting fetch request...');
+                console.log('Webhook URL:', CONFIG.webhookUrl);
                 
-                const userId = currentUser?.user_id || currentUser?.id || 'unknown';
-                const userEmail = currentUser?.email || 'unknown@example.com';
+                const userId = currentUser?.user_id || 'test-user';
+                const userEmail = currentUser?.email || 'test@example.com';
                 
-                console.log('Sending request for user:', userEmail);
+                console.log('Request payload:', {
+                    user_id: userId,
+                    email: userEmail,
+                    token: authToken ? 'TOKEN_EXISTS' : 'NO_TOKEN'
+                });
                 
-                // Add timeout to prevent hanging requests
+                // First, try to load mock data to ensure the UI works
+                console.log('Loading with mock data first to test UI...');
+                const mockData = getMockData();
+                updateDashboard(mockData);
+                hideLoadingOverlay();
+                showNotification('Dashboard loaded with sample data', 'info');
+                
+                // Now try the actual webhook
+                console.log('Attempting to fetch real data from webhook...');
+                
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+                const timeoutId = setTimeout(() => {
+                    console.log('Request timeout - aborting');
+                    controller.abort();
+                }, 10000); // 10 second timeout
                 
                 const response = await fetch(CONFIG.webhookUrl, {
                     method: 'POST',
@@ -1090,55 +1149,44 @@
                     },
                     body: JSON.stringify({
                         user_id: userId,
-                        email: userEmail,
-                        token: authToken || 'no-token',
-                        profile: currentUser?.profile || {}
+                        email: userEmail
                     }),
-                    signal: controller.signal,
-                    mode: 'cors' // Explicitly set CORS mode
+                    signal: controller.signal
                 });
                 
                 clearTimeout(timeoutId);
+                console.log('Response received:', response.status, response.statusText);
 
                 if (!response.ok) {
-                    const errorText = await response.text().catch(() => 'No error details');
-                    console.error('Server response:', errorText);
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
-                console.log('Data received:', data);
+                console.log('Real data received:', data);
                 
-                // The webhook returns an array with one object
+                // Update with real data
                 if (Array.isArray(data) && data.length > 0 && data[0].stats) {
                     dashboardData = data[0];
-                } else if (data.stats) {
-                    dashboardData = data;
-                } else {
-                    console.error('Unexpected data structure:', data);
-                    // Use mock data for testing if real data fails
-                    dashboardData = getMockData();
-                    showNotification('Using sample data - webhook may be unavailable', 'info');
+                    updateDashboard(dashboardData);
+                    showNotification('Dashboard updated with live data!', 'success');
                 }
-
-                updateDashboard(dashboardData);
-                hideLoadingOverlay();
-                showNotification('Dashboard updated successfully', 'success');
-                retryCount = 0;
+                
                 lastRefreshTime = Date.now();
 
             } catch (error) {
-                console.error('Error loading dashboard data:', error);
+                console.error('Error in loadDashboardData:', error.message);
+                console.error('Full error:', error);
                 
-                // Check if it's an abort error
                 if (error.name === 'AbortError') {
-                    console.log('Request timed out');
-                    showNotification('Request timed out. Please check your connection.', 'error');
+                    showNotification('Request timed out - using sample data', 'error');
+                } else {
+                    showNotification(`Connection error - using sample data`, 'error');
                 }
                 
-                handleLoadError(error);
+                // Dashboard is already loaded with mock data, so just log the error
             } finally {
                 isLoading = false;
+                retryCount = 0;
             }
         }
 
