@@ -1371,45 +1371,70 @@
             document.getElementById('tasksCompletedToday').textContent = tasksCompletedToday + ' tasks';
         }
 
-// ─── Next-Quarter card refresh ────────────────────────────────────────────
-function updateNextQuarter(currentStats = {}) {
-  /* 1. Work out NEXT quarter & year from *today* (ignore payload) */
-  const today        = new Date();
-  const curQ         = Math.floor(today.getMonth() / 3) + 1;
-  const nextQNumber  = curQ === 4 ? 1 : curQ + 1;
-  const nextYear     = curQ === 4 ? today.getFullYear() + 1 : today.getFullYear();
-  const nextQuarter  = `Q${nextQNumber}`;
+// ─── Next-Quarter card refresh (now payload-aware) ─────────────────────────
+function updateNextQuarter(allStats = {}) {
+  /* ------------------------------------------------------------------ DATA */
+  // n8n ships next-quarter info under stats.nextQuarter
+  const nQ = allStats.nextQuarter ?? allStats.stats?.nextQuarter ?? {};
 
-  /* 2. Label */
-  document.getElementById('nextQuarterDisplay').textContent = `${nextQuarter} ${nextYear}`;
+  /* ---------------------------------------------------------------- QUARTER */
+  // If the payload includes explicit quarter/year, use them; otherwise infer
+  let quarter = nQ.quarter;          // e.g. "Q4"
+  let year    = nQ.year;
 
-  /* 3. Countdown */
-  const start = new Date(nextYear, (nextQNumber - 1) * 3, 1);   // First day of next Q
-  const daysLeft = Math.max(0,
-        Math.ceil((start - today) / 86_400_000));               // ms-per-day
+  if (!quarter || !year) {
+    const today   = new Date();
+    const curQNum = Math.floor(today.getMonth() / 3) + 1;
+    const nxtQNum = curQNum === 4 ? 1 : curQNum + 1;
+    quarter       = `Q${nxtQNum}`;
+    year          = curQNum === 4 ? today.getFullYear() + 1
+                                   : today.getFullYear();
+  }
+
+  document.getElementById('nextQuarterDisplay').textContent =
+    `${quarter} ${year}`;
+
+  /* ------------------------------------------------------------- COUNTDOWN */
+  // Prefer server-side “startsInDays” ⟶ otherwise compute from startDateISO ⟶
+  // otherwise compute from quarter/year.
+  let daysLeft = Number.isFinite(nQ.startsInDays) ? nQ.startsInDays : null;
+
+  if (daysLeft == null && nQ.startDateISO) {
+    daysLeft = Math.max(
+      0,
+      Math.ceil((new Date(nQ.startDateISO) - new Date()) / 86_400_000)
+    );
+  }
+
+  if (daysLeft == null) {
+    const qNum  = parseInt(quarter.replace('Q', ''), 10);
+    const start = new Date(year, (qNum - 1) * 3, 1);
+    daysLeft    = Math.max(0, Math.ceil((start - new Date()) / 86_400_000));
+  }
+
   const daysEl = document.getElementById('daysUntilNext');
   daysEl.textContent = daysLeft;
 
-  /* 4. Urgency colour */
-  if (daysLeft <= 14)      { daysEl.style.color = '#FF5722'; }   // urgent
-  else if (daysLeft <= 30) { daysEl.style.color = '#FF9800'; }   // soon
-  else                     { daysEl.style.color = '#E91E63'; }   // normal
+  /* ------------------------------------------------------ COLOUR-CODING */
+  daysEl.style.color =
+    daysLeft <= 14 ? '#FF5722' :        // urgent
+    daysLeft <= 30 ? '#FF9800' :        // soon
+                     '#E91E63';         // normal
 
-  /* 5. Optional: meta row (status + goal) */
-  // Example placeholders – swap in real fields if/when you have them
-  const status   = currentStats.nextQuarterStatus ?? 'Not Started';
-  const goalText = currentStats.nextQuarterGoal   ?? 'Define Goals';
+  /* ------------------------------------------------------- STATUS / GOAL */
+  const status   = (nQ.status ?? 'Not Started').toLowerCase();
+  const goalText = nQ.goals   ?? 'Define Goals';
 
-  const badgeEl  = document.getElementById('quarterStatusBadge');
-  const goalEl   = document.getElementById('quarterGoalText');
-
-  badgeEl.textContent = status;
-  goalEl.textContent  = goalText;
+  const badgeEl = document.getElementById('quarterStatusBadge');
+  badgeEl.textContent = status.toUpperCase();
 
   badgeEl.className = 'badge ' + (
-      status.toLowerCase().includes('done')      ? 'done'        :
-      status.toLowerCase().includes('progress')  ? 'in-progress' :
-                                                   'pending');
+    status.includes('done')        ? 'done'        :
+    status.includes('progress')    ? 'in-progress' :
+                                     'pending'
+  );
+
+  document.getElementById('quarterGoalText').textContent = goalText;
 }
         // Action Center Update
         function updateActionCenter(data) {
