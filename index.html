@@ -486,17 +486,7 @@
 
         // Back to Dashboard function
         function goBackToDashboard() {
-            // Preserve authentication data
-            const userEmail = localStorage.getItem('coaching_user_email');
-            const userData = localStorage.getItem('coaching_user_data');
-            
-            if (userEmail && userData) {
-                // Navigate back to main dashboard
-                window.location.href = CONFIG.mainDashboardUrl;
-            } else {
-                // If no auth, still go back but user will need to login
-                window.location.href = CONFIG.mainDashboardUrl;
-            }
+            window.location.href = CONFIG.mainDashboardUrl;
         }
 
         // Check authentication
@@ -517,14 +507,14 @@
                 }
                 
                 if (authStatus) {
-                    authStatus.textContent = `Logged in as: ${userEmail}`;
+                    authStatus.textContent = `Authenticated as: ${userEmail}`;
                 }
                 
                 console.log('User authenticated:', userEmail);
                 return true;
             } else {
                 if (authStatus) {
-                    authStatus.textContent = 'Not authenticated';
+                    authStatus.textContent = 'Not authenticated. Please log in via the main dashboard.';
                     authStatus.style.color = '#FF5722';
                 }
                 console.log('No authentication found');
@@ -532,7 +522,7 @@
             }
         }
 
-        // Load dashboard data function
+        // *** CORRECTED: Load dashboard data function ***
         async function loadDashboardData() {
             if (isLoading) {
                 console.log('Already loading data, skipping...');
@@ -544,14 +534,27 @@
             if (refreshBtn) refreshBtn.disabled = true;
             
             try {
-                const userEmail = currentUser?.email || localStorage.getItem('coaching_user_email') || 'guest@example.com';
-                
+                const userEmail = currentUser?.email || localStorage.getItem('coaching_user_email');
+
+                if (!userEmail) {
+                    throw new Error("User email not found. Please log in.");
+                }
+
+                // 1. Get the authentication token from localStorage
+                const token = localStorage.getItem('auth_token');
+
+                if (!token) {
+                    throw new Error("Authentication token not found. Please log in again.");
+                }
+
                 console.log('Fetching dashboard data for:', userEmail);
                 
+                // 2. Add the Authorization header to the request
                 const response = await fetch(CONFIG.webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // <-- THE FIX
                     },
                     body: JSON.stringify({
                         userEmail: userEmail,
@@ -573,12 +576,12 @@
                     updateLastRefreshTime();
                     showNotification('Dashboard updated successfully!', 'success');
                 } else {
-                    throw new Error('Data load unsuccessful');
+                    throw new Error(dashboardData.message || 'Data load was not successful');
                 }
                 
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
-                showNotification('Failed to load dashboard data. Using sample data.', 'error');
+                showNotification(`Error: ${error.message}`, 'error');
                 loadSampleData();
             } finally {
                 isLoading = false;
@@ -595,25 +598,28 @@
             const stats = data.stats;
             const insights = data.insights;
             
-            // Clear existing cards
-            container.innerHTML = '';
+            container.innerHTML = ''; // Clear previous cards
             
-            // Create cards based on the data
-            const cards = [
-                createTodaysFocusCard(stats, insights),
-                createStackSessionsCard(stats.stackSessions),
-                createActionCenterCard(stats.actionCenter),
-                createSystemHealthCard(insights),
-                createFactMapCard(stats.factMap),
-                createQuarterlyCard(stats.quarterly, stats.nextQuarter),
-                createNextQuarterCard(stats.nextQuarter),
-                createPersonalityCard(stats.assessment)
-            ];
-            
-            cards.forEach(card => container.appendChild(card));
+            // Create and append cards only if data exists
+            if (stats && insights) {
+                const cards = [
+                    createTodaysFocusCard(stats, insights),
+                    createStackSessionsCard(stats.stackSessions),
+                    createActionCenterCard(stats.actionCenter),
+                    createSystemHealthCard(insights),
+                    createFactMapCard(stats.factMap),
+                    createQuarterlyCard(stats.quarterly),
+                    createNextQuarterCard(stats.nextQuarter),
+                    createPersonalityCard(stats.assessment)
+                ];
+                
+                cards.forEach(card => card && container.appendChild(card));
+            } else {
+                container.innerHTML = '<p>Could not load dashboard components. Data is missing.</p>';
+            }
         }
 
-        // Create card functions (simplified for brevity)
+        // Create card functions
         function createCard(title, className, content) {
             const card = document.createElement('div');
             card.className = `stats-card ${className}`;
@@ -622,18 +628,17 @@
         }
 
         function createTodaysFocusCard(stats, insights) {
+            if (!stats || !insights) return null;
             const todayStatus = stats.stackSessions?.todayStatus || 'Not Started';
-            const suggestedFocus = insights?.suggestedFocus || 'Complete today\'s Stack Session';
+            const suggestedFocus = insights.suggestedFocus || 'Complete today\'s Stack Session';
             
             return createCard('Today\'s Focus', 'focus-card', `
-                <div class="card-header">
-                    <h3 class="card-title">Today's Focus</h3>
-                </div>
-                <div class="metric-label">Thursday, September 25, 2025</div>
+                <div class="card-header"><h3 class="card-title">Today's Focus</h3></div>
+                <div class="metric-label">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
                 <div style="margin: 20px 0;">
                     <p>Stack Session: <strong style="color: ${todayStatus === 'Complete' ? '#4CAF50' : '#FF9800'}">${todayStatus}</strong></p>
-                    <p style="margin-top: 10px;">Actions Moved: <strong>${stats.actionCenter?.movedToday || 0} actions</strong></p>
-                    <p style="margin-top: 10px;">Tasks Completed: <strong>${stats.actionCenter?.completedToday || 0} tasks</strong></p>
+                    <p style="margin-top: 10px;">Actions Moved: <strong>${stats.actionCenter?.movedToday || 0}</strong></p>
+                    <p style="margin-top: 10px;">Tasks Completed: <strong>${stats.actionCenter?.completedToday || 0}</strong></p>
                 </div>
                 <div style="background: rgba(255, 152, 0, 0.1); padding: 10px; border-radius: 8px; margin-top: 20px;">
                     💡 ${suggestedFocus}
@@ -642,55 +647,49 @@
         }
 
         function createStackSessionsCard(stackSessions) {
-            const streak = stackSessions?.streak || 0;
-            const weeklyCount = stackSessions?.weeklyCount || 0;
-            const todayStatus = stackSessions?.todayStatus || 'Not Started';
+            if (!stackSessions) return null;
+            const streak = stackSessions.streak || 0;
+            const weeklyCount = stackSessions.weeklyCount || 0;
+            const todayStatus = stackSessions.todayStatus || 'Not Started';
             
             return createCard('Stack Sessions', 'stack-sessions-card', `
-                <div class="card-header">
-                    <h3 class="card-title">Stack Sessions</h3>
-                </div>
+                <div class="card-header"><h3 class="card-title">Stack Sessions</h3></div>
                 <div class="metric-label">Today: <strong style="color: ${todayStatus === 'Complete' ? '#4CAF50' : '#FF9800'}">${todayStatus}</strong></div>
                 <div class="metric-value">${streak}</div>
                 <div class="metric-label">Day Streak</div>
                 <p style="margin-top: 15px;">${weeklyCount} / 7 this week</p>
-                <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px;">Total: ${stackSessions?.totalSessions || 0} sessions</p>
+                <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px;">Total: ${stackSessions.totalSessions || 0} sessions</p>
             `);
         }
 
         function createActionCenterCard(actionCenter) {
-            const activeCount = actionCenter?.activeCount || 0;
-            const capacityUsed = actionCenter?.capacityUsed || 0;
-            const capacityMax = actionCenter?.capacityMax || 40;
+            if (!actionCenter) return null;
+            const activeCount = actionCenter.activeCount || 0;
+            const capacityUsed = actionCenter.capacityUsed || 0;
+            const capacityMax = actionCenter.capacityMax || 40;
             const percentage = Math.min((capacityUsed / capacityMax) * 100, 100);
             
             return createCard('Action Command Center', 'action-center-card', `
-                <div class="card-header">
-                    <h3 class="card-title">Action Command Center</h3>
-                </div>
+                <div class="card-header"><h3 class="card-title">Action Command Center</h3></div>
                 <div class="metric-value">${activeCount}</div>
                 <div class="metric-label">Active Tasks</div>
                 <div class="progress-bar">
-                    <div class="progress-fill ${percentage > 100 ? 'red' : percentage > 75 ? 'yellow' : 'green'}" 
+                    <div class="progress-fill ${percentage > 90 ? 'red' : percentage > 70 ? 'yellow' : 'green'}" 
                          style="width: ${percentage}%"></div>
                 </div>
                 <p style="text-align: center; margin-top: 10px;">
-                    ${Math.round(capacityUsed)} / ${capacityMax} capacity points
+                    ${Math.round(capacityUsed)} / ${capacityMax} capacity points used
                 </p>
-                <p style="margin-top: 10px;">Completed this week: ${actionCenter?.completedThisWeek || 0}</p>
-                <p>Total: ${actionCenter?.totalItems || 0}</p>
             `);
         }
 
         function createSystemHealthCard(insights) {
-            const health = insights?.overallHealth || 0;
-            const trend = insights?.weeklyTrend || 'stable';
-            const focus = insights?.suggestedFocus || 'Continue daily practices';
+            if (!insights) return null;
+            const health = insights.overallHealth || 0;
+            const trend = insights.weeklyTrend || 'stable';
             
             return createCard('System Health', 'health-card', `
-                <div class="card-header">
-                    <h3 class="card-title">System Health</h3>
-                </div>
+                <div class="card-header"><h3 class="card-title">System Health</h3></div>
                 <div class="metric-value" style="color: ${health >= 70 ? '#4CAF50' : health >= 40 ? '#FFC107' : '#FF5722'}">
                     ${health}%
                 </div>
@@ -700,48 +699,37 @@
                          style="width: ${health}%"></div>
                 </div>
                 <p style="margin-top: 15px;">Weekly Trend: <strong>${trend}</strong></p>
-                <div style="background: rgba(255, 193, 7, 0.1); padding: 10px; border-radius: 8px; margin-top: 15px;">
-                    Suggested Focus: ${focus}
-                </div>
             `);
         }
 
         function createFactMapCard(factMap) {
-            const status = factMap?.status || 'Pending';
-            const domainsComplete = factMap?.domainsComplete || 0;
-            const domainsTotal = factMap?.domainsTotal || 4;
+            if (!factMap) return null;
+            const domainsComplete = factMap.domainsComplete || 0;
+            const domainsTotal = factMap.domainsTotal || 4;
             
             return createCard('Fact Map - September', 'fact-map-card', `
-                <div class="card-header">
-                    <h3 class="card-title">Monthly Fact Map - ${factMap?.month || 'September'}</h3>
-                </div>
+                <div class="card-header"><h3 class="card-title">Monthly Fact Map - ${factMap.month || 'Current'}</h3></div>
                 <div class="domain-grid">
-                    <div class="domain-item ${domainsComplete >= 1 ? 'complete' : ''}">Body<br>${domainsComplete >= 1 ? 'Complete' : 'Pending'}</div>
-                    <div class="domain-item ${domainsComplete >= 2 ? 'complete' : ''}">Being<br>${domainsComplete >= 2 ? 'Complete' : 'Pending'}</div>
-                    <div class="domain-item ${domainsComplete >= 3 ? 'complete' : ''}">Balance<br>${domainsComplete >= 3 ? 'complete' : 'Pending'}</div>
-                    <div class="domain-item ${domainsComplete >= 4 ? 'complete' : ''}">Business<br>${domainsComplete >= 4 ? 'Complete' : 'Pending'}</div>
+                    <div class="domain-item ${domainsComplete >= 1 ? 'complete' : ''}">Body</div>
+                    <div class="domain-item ${domainsComplete >= 2 ? 'complete' : ''}">Being</div>
+                    <div class="domain-item ${domainsComplete >= 3 ? 'complete' : ''}">Balance</div>
+                    <div class="domain-item ${domainsComplete >= 4 ? 'complete' : ''}">Business</div>
                 </div>
                 <p style="text-align: center; margin-top: 20px;">
-                    <strong>${domainsComplete} / ${domainsTotal} Complete</strong>
+                    <strong>${domainsComplete} / ${domainsTotal} Domains Complete</strong>
                 </p>
-                <p style="text-align: center; color: rgba(255, 255, 255, 0.6);">Due: ${factMap?.dueDate || 'Oct 1'}</p>
+                <p style="text-align: center; color: rgba(255, 255, 255, 0.6);">Due: ${factMap.dueDate || 'N/A'}</p>
             `);
         }
 
-        function createQuarterlyCard(quarterly, nextQuarter) {
-            const quarter = quarterly?.quarter || 'Q3';
-            const year = quarterly?.year || 2025;
-            const daysLeft = quarterly?.daysLeft || 0;
-            const progress = quarterly?.progress || 0;
+        function createQuarterlyCard(quarterly) {
+            if (!quarterly) return null;
+            const progress = quarterly.progress || 0;
             
             return createCard('Quarterly Impossible Game', 'quarterly-card', `
-                <div class="card-header">
-                    <h3 class="card-title">Quarterly Impossible Game</h3>
-                    <span style="background: rgba(255, 67, 67, 0.2); color: #FF4343; padding: 4px 8px; border-radius: 4px; font-size: 12px;">URGENT</span>
-                </div>
+                <div class="card-header"><h3 class="card-title">${quarterly.quarter} ${quarterly.year}</h3></div>
                 <div style="text-align: center;">
-                    <h2 style="font-size: 36px; margin: 20px 0; color: #00BCD4;">${quarter} ${year}</h2>
-                    <p style="font-size: 24px; color: #FF9800; margin: 10px 0;">${daysLeft}</p>
+                    <p style="font-size: 24px; color: #FF9800; margin: 10px 0;">${quarterly.daysLeft}</p>
                     <p class="metric-label">Days Remaining</p>
                 </div>
                 <div style="margin-top: 20px;">
@@ -756,46 +744,27 @@
         }
 
         function createNextQuarterCard(nextQuarter) {
-            if (!nextQuarter) return createCard('Next Quarter Planning', 'quarterly-card', '<p>No data available</p>');
-            
-            const focusAreas = nextQuarter.focusAreas || [];
-            const totalGoals = nextQuarter.totalGoals || 0;
+            if (!nextQuarter) return null;
             
             return createCard('Next Quarter Planning', 'quarterly-card', `
-                <div class="card-header">
-                    <h3 class="card-title">Next Quarter Planning</h3>
-                    <span style="background: rgba(76, 175, 80, 0.2); color: #4CAF50; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Planned</span>
-                </div>
+                <div class="card-header"><h3 class="card-title">Next Quarter Planning</h3></div>
                 <div style="text-align: center;">
                     <h2 style="font-size: 36px; margin: 20px 0; color: #E91E63;">${nextQuarter.quarter} ${nextQuarter.year}</h2>
                     <p style="margin: 10px 0;">Starts in</p>
                     <p style="font-size: 36px; color: #FF9800; font-weight: bold;">${nextQuarter.startsInDays}</p>
                     <p class="metric-label">Days</p>
                 </div>
-                <div style="margin-top: 20px;">
-                    <p style="margin-bottom: 10px;">Focus Areas:</p>
-                    <div class="domain-grid">
-                        ${focusAreas.map(area => `
-                            <div class="domain-item" style="background: rgba(76, 175, 80, 0.1); border-color: #4CAF50;">
-                                ${area}<br><span style="font-size: 10px;">${nextQuarter.goals?.[area.toLowerCase()]?.length || 0} missions</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
                 <p style="text-align: center; margin-top: 20px;">
-                    Total Missions Set: <strong style="font-size: 24px; color: #E91E63;">${totalGoals}</strong>
+                    Total Missions Set: <strong style="font-size: 24px; color: #E91E63;">${nextQuarter.totalGoals || 0}</strong>
                 </p>
             `);
         }
 
         function createPersonalityCard(assessment) {
-            if (!assessment) return createCard('Personality Assessment', 'assessment-card', '<p>No data available</p>');
+            if (!assessment || assessment.status !== 'Complete') return null;
             
             return createCard('Personality Assessment', 'assessment-card', `
-                <div class="card-header">
-                    <h3 class="card-title">Personality Assessment</h3>
-                    <span style="background: rgba(76, 175, 80, 0.2); color: #4CAF50; padding: 4px 8px; border-radius: 4px; font-size: 12px;">COMPLETE</span>
-                </div>
+                <div class="card-header"><h3 class="card-title">Your Profile</h3></div>
                 <div style="text-align: center; margin: 20px 0;">
                     <div style="display: flex; justify-content: center; gap: 10px; margin: 20px 0;">
                         <span class="color-badge color-white">${assessment.primaryColor}</span>
@@ -814,65 +783,22 @@
 
         // Load sample data function
         function loadSampleData() {
-            const sampleData = {
+            renderDashboard({
                 success: true,
-                timestamp: new Date().toISOString(),
                 stats: {
-                    actionCenter: {
-                        activeCount: 48,
-                        capacityUsed: 148.08,
-                        capacityMax: 40,
-                        completedThisWeek: 0,
-                        completedToday: 0,
-                        movedToday: 0,
-                        totalItems: 48
-                    },
-                    assessment: {
-                        status: "Complete",
-                        lastCompleted: "2025-09-15T06:00:00.000Z",
-                        primaryColor: "White",
-                        secondaryColor: "Red",
-                        kolbeProfile: "5-6-3-7"
-                    },
-                    stackSessions: {
-                        todayStatus: "Not Started",
-                        streak: 2,
-                        weeklyCount: 8,
-                        totalSessions: 8
-                    },
-                    factMap: {
-                        dueDate: "Oct 1",
-                        domainsComplete: 4,
-                        domainsTotal: 4,
-                        status: "Complete",
-                        month: "September"
-                    },
-                    quarterly: {
-                        quarter: "Q3",
-                        year: 2025,
-                        daysLeft: 5,
-                        progress: 0,
-                        status: "Not Started"
-                    },
-                    nextQuarter: {
-                        quarter: "Q4",
-                        year: 2025,
-                        startsInDays: 6,
-                        startDate: "Oct 1",
-                        focusAreas: ["Body", "Being", "Balance", "Business"],
-                        status: "Planned",
-                        totalGoals: 16
-                    }
+                    actionCenter: { activeCount: 48, capacityUsed: 148.08, capacityMax: 40 },
+                    assessment: { status: "Complete", lastCompleted: "2025-09-15T06:00:00.000Z", primaryColor: "White", secondaryColor: "Red", kolbeProfile: "5-6-3-7" },
+                    stackSessions: { todayStatus: "Not Started", streak: 2, weeklyCount: 8, totalSessions: 8 },
+                    factMap: { dueDate: "Oct 1", domainsComplete: 4, domainsTotal: 4, status: "Complete", month: "September" },
+                    quarterly: { quarter: "Q3", year: 2025, daysLeft: 5, progress: 0 },
+                    nextQuarter: { quarter: "Q4", year: 2025, startsInDays: 6, totalGoals: 16 }
                 },
                 insights: {
                     overallHealth: 45,
                     suggestedFocus: "Complete today's Stack Session",
                     weeklyTrend: "ascending"
                 }
-            };
-            
-            renderDashboard(sampleData);
-            hideLoadingOverlay();
+            });
         }
 
         // Utility functions
@@ -881,31 +807,27 @@
         }
 
         function showNotification(message, type = 'info') {
-            console.log('Notification:', message);
-            
+            const existing = document.querySelector('.notification');
+            if(existing) existing.remove();
+
             const notification = document.createElement('div');
-            notification.className = 'notification notification-' + type;
+            notification.className = `notification notification-${type}`;
             notification.textContent = message;
             document.body.appendChild(notification);
             
-            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => notification.classList.add('show'), 10);
             
             setTimeout(() => {
                 notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 400);
-            }, 3000);
+                setTimeout(() => notification.remove(), 500);
+            }, 4000);
         }
 
         function updateLastRefreshTime() {
             const now = new Date();
             const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             document.getElementById('lastUpdate').textContent = 'Last updated: ' + timeString;
-            
-            // Also update footer sync time
-            const footerSync = document.getElementById('footerLastSync');
-            if (footerSync) {
-                footerSync.textContent = 'Last sync: ' + timeString;
-            }
+            document.getElementById('footerLastSync').textContent = 'Last sync: ' + timeString;
         }
 
         console.log('Dashboard script loaded successfully!');
